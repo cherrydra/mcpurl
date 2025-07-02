@@ -10,6 +10,8 @@ var (
 )
 
 type Parser struct {
+	Help bool
+
 	transportArgs []string
 
 	tools     bool
@@ -54,6 +56,9 @@ func (p *Parser) Parse(args []string) error {
 				case "-R", "--resource":
 					p.resource = args[i+1]
 				}
+				return nil
+			case "-h", "--help":
+				p.Help = true
 				return nil
 			}
 		}

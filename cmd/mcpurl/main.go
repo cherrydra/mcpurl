@@ -1,6 +1,7 @@
 package main
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -17,13 +18,22 @@ func main() {
 	runE(func() error {
 		return parser.Parse(os.Args[1:])
 	})
+	if parser.Help {
+		printUsage()
+		return
+	}
 	runE(func() error {
 		return runMain(parser)
 	})
 }
 
 func runE(run func() error) {
-	if err := run(); err != nil {
+	err := run()
+	if errors.Is(err, parser.ErrInvalidUsage) {
+		printUsage()
+		os.Exit(2)
+	}
+	if err != nil {
 		fmt.Printf("Error: %s\n", err.Error())
 		os.Exit(1)
 	}
@@ -38,10 +48,9 @@ func runMain(parser parser.Parser) error {
 
 	var transport *mcp.CommandTransport
 	switch transportURL.Scheme {
-	case "":
-		transport = mcp.NewCommandTransport(exec.Command(transportURL.Path, transportArgs[1:]...))
-	case "stdio":
-		transport = mcp.NewCommandTransport(exec.Command(transportURL.Host, transportArgs[1:]...))
+	case "", "stdio":
+		cmd := cmp.Or(transportURL.Host, transportURL.Path)
+		transport = mcp.NewCommandTransport(exec.Command(cmd, transportArgs[1:]...))
 	default:
 		return fmt.Errorf("unsupportd transport url scheme: %s", transportURL.Scheme)
 	}
@@ -72,4 +81,26 @@ func runMain(parser parser.Parser) error {
 		return readResource(ctx, session, parser.Resource())
 	}
 	return errors.New("invalid usage")
+}
+
+func printUsage() {
+	fmt.Println(`Usage:
+  mcpurl <options> <mcp_server>
+
+Accepted <options>:
+  -t, --tools             list tools
+  -p, --prompts           list prompts
+  -r, --resources         list resources
+  -T, --tool <string>     call tool
+  -P, --prompt <string>   get prompt
+  -R, --resource <string> read resource
+
+  -h, --help              show this usage
+
+Currently supported transport:
+  stdio (standard input/output)
+
+Accepted <mcp_server> formats:
+  stdio:///path/to/mcpserver [args]   # Explicit stdio scheme
+  /path/to/mcpserver [args]           # Implicit stdio scheme`)
 }
