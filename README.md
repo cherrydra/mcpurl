@@ -12,12 +12,13 @@ Usage:
   mcpurl <options> <mcp_server>
 
 Accepted <options>:
-  -t, --tools             list tools
-  -p, --prompts           list prompts
-  -r, --resources         list resources
-  -T, --tool <string>     call tool
-  -P, --prompt <string>   get prompt
-  -R, --resource <string> read resource
+  -T, --tools             list tools
+  -P, --prompts           list prompts
+  -R, --resources         list resources
+  -t, --tool <string>     call tool
+  -p, --prompt <string>   get prompt
+  -r, --resource <string> read resource
+  -d, --data <string>     send json data to server
 
   -h, --help              show this usage
 

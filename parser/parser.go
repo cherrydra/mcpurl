@@ -28,32 +28,30 @@ func (p *Parser) Parse(args []string) error {
 	parseSubCommand := func() error {
 		for i, arg := range args {
 			switch arg {
-			case "-t", "-p", "-r", "--tools", "--prompts", "--resources":
+			case "-T", "-P", "-R", "--tools", "--prompts", "--resources":
 				p.transportArgs = append(p.transportArgs, args[:i]...)
 				p.transportArgs = append(p.transportArgs, args[i+1:]...)
 				switch arg {
-				case "-t", "--tools":
+				case "-T", "--tools":
 					p.tools = true
-				case "-p", "--prompts":
+				case "-P", "--prompts":
 					p.prompts = true
-				case "-r", "--resources":
+				case "-R", "--resources":
 					p.resources = true
 				}
 				return nil
-			case "-T", "-P", "-R", "--tool", "--prompt", "--resource":
+			case "-t", "-p", "-r", "--tool", "--prompt", "--resource":
 				if len(args) < i+2 {
 					return ErrInvalidUsage
 				}
 				p.transportArgs = append(p.transportArgs, args[:i]...)
-				if len(args) > i+2 {
-					p.transportArgs = append(p.transportArgs, args[i+2:]...)
-				}
+				p.transportArgs = append(p.transportArgs, args[i+2:]...)
 				switch arg {
-				case "-T", "--tool":
+				case "-t", "--tool":
 					p.tool = args[i+1]
-				case "-P", "--prompt":
+				case "-p", "--prompt":
 					p.prompt = args[i+1]
-				case "-R", "--resource":
+				case "-r", "--resource":
 					p.resource = args[i+1]
 				}
 				return nil
@@ -76,9 +74,7 @@ func (p *Parser) Parse(args []string) error {
 					return ErrInvalidUsage
 				}
 				p.transportArgs = append(p.transportArgs[:0], args[:i]...)
-				if len(args) > i+2 {
-					p.transportArgs = append(p.transportArgs, args[i+2:]...)
-				}
+				p.transportArgs = append(p.transportArgs, args[i+2:]...)
 				p.data = args[i+1]
 				return nil
 			}

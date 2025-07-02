@@ -50,7 +50,9 @@ func runMain(parser parser.Parser) error {
 	switch transportURL.Scheme {
 	case "", "stdio":
 		cmd := cmp.Or(transportURL.Host, transportURL.Path)
-		transport = mcp.NewCommandTransport(exec.Command(cmd, transportArgs[1:]...))
+		command := exec.Command(cmd, transportArgs[1:]...)
+		command.Stderr = os.Stderr
+		transport = mcp.NewCommandTransport(command)
 	default:
 		return fmt.Errorf("unsupportd transport url scheme: %s", transportURL.Scheme)
 	}
@@ -88,12 +90,13 @@ func printUsage() {
   mcpurl <options> <mcp_server>
 
 Accepted <options>:
-  -t, --tools             list tools
-  -p, --prompts           list prompts
-  -r, --resources         list resources
-  -T, --tool <string>     call tool
-  -P, --prompt <string>   get prompt
-  -R, --resource <string> read resource
+  -T, --tools             list tools
+  -P, --prompts           list prompts
+  -R, --resources         list resources
+  -t, --tool <string>     call tool
+  -p, --prompt <string>   get prompt
+  -r, --resource <string> read resource
+  -d, --data <string>     send json data to server
 
   -h, --help              show this usage
 
