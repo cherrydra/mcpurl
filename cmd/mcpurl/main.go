@@ -11,6 +11,7 @@ import (
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/nasuci/mcpurl/parser"
+	"github.com/nasuci/mcpurl/version"
 )
 
 func main() {
@@ -20,6 +21,10 @@ func main() {
 	})
 	if parser.Help {
 		printUsage()
+		return
+	}
+	if parser.Version {
+		fmt.Println(version.GoVersion, version.Short())
 		return
 	}
 	runE(func() error {
@@ -39,14 +44,14 @@ func runE(run func() error) {
 	}
 }
 
-func runMain(parser parser.Parser) error {
-	transportArgs := parser.TransportArgs()
+func runMain(parsed parser.Parser) error {
+	transportArgs := parsed.TransportArgs()
 	transportURL, err := url.Parse(transportArgs[0])
 	if err != nil {
 		return fmt.Errorf("parse transport url: %w", err)
 	}
 
-	var transport *mcp.CommandTransport
+	var transport mcp.Transport
 	switch transportURL.Scheme {
 	case "", "stdio":
 		cmd := cmp.Or(transportURL.Host, transportURL.Path)
@@ -58,36 +63,39 @@ func runMain(parser parser.Parser) error {
 	}
 
 	ctx := context.Background()
-	client := mcp.NewClient("mcpcurl", "v0.1", nil)
+	client := mcp.NewClient("mcpcurl", version.Short(), nil)
 	session, err := client.Connect(ctx, transport)
 	if err != nil {
 		return fmt.Errorf("connect mcp server: %w", err)
 	}
 	defer session.Close()
-	if parser.Tools() {
+	if parsed.Tools() {
 		return listTools(ctx, session)
 	}
-	if parser.Prompts() {
+	if parsed.Prompts() {
 		return listPrompts(ctx, session)
 	}
-	if parser.Resources() {
+	if parsed.Resources() {
 		return listResources(ctx, session)
 	}
-	if parser.Tool() != "" {
-		return callTool(ctx, session, parser.Tool(), parser.Data())
+	if parsed.Tool() != "" {
+		return callTool(ctx, session, parsed.Tool(), parsed.Data())
 	}
-	if parser.Prompt() != "" {
-		return getPrompt(ctx, session, parser.Prompt(), parser.Data())
+	if parsed.Prompt() != "" {
+		return getPrompt(ctx, session, parsed.Prompt(), parsed.Data())
 	}
-	if parser.Resource() != "" {
-		return readResource(ctx, session, parser.Resource())
+	if parsed.Resource() != "" {
+		return readResource(ctx, session, parsed.Resource())
 	}
-	return errors.New("invalid usage")
+	return parser.ErrInvalidUsage
 }
 
 func printUsage() {
 	fmt.Println(`Usage:
   mcpurl <options> <mcp_server>
+
+Currently supported transport:
+  stdio (standard input/output)
 
 Accepted <options>:
   -T, --tools             list tools
@@ -99,11 +107,9 @@ Accepted <options>:
   -d, --data <string>     send json data to server
 
   -h, --help              show this usage
-
-Currently supported transport:
-  stdio (standard input/output)
+  -v, --version           show version
 
 Accepted <mcp_server> formats:
-  stdio:///path/to/mcpserver [args]   # Explicit stdio scheme
-  /path/to/mcpserver [args]           # Implicit stdio scheme`)
+  stdio:///path/to/mcpserver [args]
+  /path/to/mcpserver [args]`)
 }

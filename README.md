@@ -21,6 +21,7 @@ Accepted <options>:
   -d, --data <string>     send json data to server
 
   -h, --help              show this usage
+  -v, --version           show version
 
 Currently supported transport:
   stdio (standard input/output)
