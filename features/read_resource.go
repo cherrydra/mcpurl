@@ -1,6 +1,7 @@
-package main
+package features
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,15 +10,15 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-func readResource(ctx context.Context, session *mcp.ClientSession, resource string) error {
-	result, err := session.ReadResource(ctx, &mcp.ReadResourceParams{
+func (s *ServerFeatures) ReadResource(ctx context.Context, resource string) error {
+	result, err := s.Session.ReadResource(ctx, &mcp.ReadResourceParams{
 		URI: resource,
 	})
 	if err != nil {
 		return fmt.Errorf("read resource: %w", err)
 	}
 	for _, c := range result.Contents {
-		json.NewEncoder(os.Stdout).Encode(c)
+		json.NewEncoder(cmp.Or(s.Out, os.Stdout)).Encode(c)
 	}
 	return nil
 }

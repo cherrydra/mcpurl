@@ -9,8 +9,10 @@ import (
 	"os"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/nasuci/mcpurl/cmd/mcpurl/transport"
+	"github.com/nasuci/mcpurl/features"
+	"github.com/nasuci/mcpurl/interactor"
 	"github.com/nasuci/mcpurl/parser"
+	"github.com/nasuci/mcpurl/transport"
 	"github.com/nasuci/mcpurl/version"
 )
 
@@ -66,23 +68,32 @@ func runMain(parsed parser.Parser) error {
 		return fmt.Errorf("connect mcp server: %w", err)
 	}
 	defer session.Close()
+
+	if parsed.Interactive {
+		return interactor.Interactor{
+			Session: session,
+		}.Run(ctx)
+	}
+
+	f := features.ServerFeatures{Session: session}
+
 	if parsed.Tools() {
-		return listTools(ctx, session)
+		return f.PrintTools(ctx)
 	}
 	if parsed.Prompts() {
-		return listPrompts(ctx, session)
+		return f.PrintPrompts(ctx)
 	}
 	if parsed.Resources() {
-		return listResources(ctx, session)
+		return f.PrintResources(ctx)
 	}
 	if parsed.Tool() != "" {
-		return callTool(ctx, session, parsed.Tool(), parsed.Data)
+		return f.CallTool(ctx, parsed.Tool(), parsed.Data)
 	}
 	if parsed.Prompt() != "" {
-		return getPrompt(ctx, session, parsed.Prompt(), parsed.Data)
+		return f.GetPrompt(ctx, parsed.Prompt(), parsed.Data)
 	}
 	if parsed.Resource() != "" {
-		return readResource(ctx, session, parsed.Resource())
+		return f.ReadResource(ctx, parsed.Resource())
 	}
 	return parser.ErrInvalidUsage
 }
@@ -100,10 +111,10 @@ Accepted <options>:
   -r, --resource <string>     Read resource
   -d, --data <string/@file>   Send json data to server
   -H, --header <header/@file> Pass custom header(s) to server
-  -s, --silent                Silent mode
-
   -h, --help                  Show this usage
+  -I, --interactive           Start interactive mode
   -l, --log-level <level>     Set log level (debug, info, warn, error)
+  -s, --silent                Silent mode
   -v, --version               Show version
 
 Accepted <mcp_server> formats:

@@ -15,12 +15,13 @@ var (
 )
 
 type Parser struct {
-	Data     string
-	Headers  []string
-	Help     bool
-	LogLevel slog.Level
-	Silent   bool
-	Version  bool
+	Data        string
+	Headers     []string
+	Help        bool
+	Interactive bool
+	LogLevel    slog.Level
+	Silent      bool
+	Version     bool
 
 	transportArgs []string
 
@@ -46,6 +47,9 @@ func (p *Parser) Parse(args []string) error {
 		case "-h", "--help":
 			p.Help = true
 			return nil
+		case "-I", "--interactive":
+			p.Silent = true
+			p.Interactive = true
 		case "-s", "--silent":
 			p.Silent = true
 		case "-v", "--version":
@@ -65,7 +69,7 @@ func (p *Parser) Parse(args []string) error {
 				case "-r", "--resource":
 					p.resource = args[i+1]
 				case "-d", "--data":
-					data, err := p.parseData(args[i+1])
+					data, err := p.ParseData(args[i+1])
 					if err != nil {
 						return fmt.Errorf("parse data: %w", err)
 					}
@@ -121,7 +125,7 @@ func (p *Parser) Resource() string {
 	return p.resource
 }
 
-func (p *Parser) parseData(arg string) (string, error) {
+func (p Parser) ParseData(arg string) (string, error) {
 	after, ok := strings.CutPrefix(arg, "@")
 	if !ok {
 		return after, nil

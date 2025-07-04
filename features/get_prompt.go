@@ -1,6 +1,7 @@
-package main
+package features
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -9,14 +10,14 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-func getPrompt(ctx context.Context, session *mcp.ClientSession, prompt, data string) error {
+func (s *ServerFeatures) GetPrompt(ctx context.Context, prompt, data string) error {
 	params := map[string]string{}
 	if data != "" {
 		if err := json.Unmarshal([]byte(data), &params); err != nil {
 			return fmt.Errorf("unmarshal prompt arguments: %w", err)
 		}
 	}
-	result, err := session.GetPrompt(ctx, &mcp.GetPromptParams{
+	result, err := s.Session.GetPrompt(ctx, &mcp.GetPromptParams{
 		Name:      prompt,
 		Arguments: params,
 	})
@@ -25,7 +26,7 @@ func getPrompt(ctx context.Context, session *mcp.ClientSession, prompt, data str
 	}
 
 	for _, c := range result.Messages {
-		json.NewEncoder(os.Stdout).Encode(c)
+		json.NewEncoder(cmp.Or(s.Out, os.Stdout)).Encode(c)
 	}
 	return nil
 }

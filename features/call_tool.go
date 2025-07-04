@@ -1,21 +1,23 @@
-package main
+package features
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-func callTool(ctx context.Context, session *mcp.ClientSession, tool, data string) error {
+func (s *ServerFeatures) CallTool(ctx context.Context, tool, data string) error {
 	params := map[string]any{}
 	if data != "" {
 		if err := json.Unmarshal([]byte(data), &params); err != nil {
 			return fmt.Errorf("unmarshal tool arguments: %w", err)
 		}
 	}
-	result, err := session.CallTool(ctx, &mcp.CallToolParams{
+	result, err := s.Session.CallTool(ctx, &mcp.CallToolParams{
 		Name:      tool,
 		Arguments: params,
 	})
@@ -25,7 +27,7 @@ func callTool(ctx context.Context, session *mcp.ClientSession, tool, data string
 
 	for _, c := range result.Content {
 		out, _ := c.MarshalJSON()
-		fmt.Println(string(out))
+		fmt.Fprintln(cmp.Or(s.Out, os.Stdout), string(out))
 	}
 	return nil
 }
