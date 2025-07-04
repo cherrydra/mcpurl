@@ -65,10 +65,10 @@ func runMain(parsed parser.Parser) error {
 		return listResources(ctx, session)
 	}
 	if parsed.Tool() != "" {
-		return callTool(ctx, session, parsed.Tool(), parsed.Data())
+		return callTool(ctx, session, parsed.Tool(), parsed.Data)
 	}
 	if parsed.Prompt() != "" {
-		return getPrompt(ctx, session, parsed.Prompt(), parsed.Data())
+		return getPrompt(ctx, session, parsed.Prompt(), parsed.Data)
 	}
 	if parsed.Resource() != "" {
 		return readResource(ctx, session, parsed.Resource())
@@ -81,18 +81,18 @@ func printUsage() {
   mcpurl <options> <mcp_server>
 
 Accepted <options>:
-  -T, --tools             List tools
-  -P, --prompts           List prompts
-  -R, --resources         List resources
-  -t, --tool <string>     Call tool
-  -p, --prompt <string>   Get prompt
-  -r, --resource <string> Read resource
-  -d, --data <string>     Send json data to server
-  -H, --header <header>   Pass custom header(s) to server
-  -s, --silent            Silent mode
+  -T, --tools                 List tools
+  -P, --prompts               List prompts
+  -R, --resources             List resources
+  -t, --tool <string>         Call tool
+  -p, --prompt <string>       Get prompt
+  -r, --resource <string>     Read resource
+  -d, --data <string/@file>   Send json data to server
+  -H, --header <header/@file> Pass custom header(s) to server
+  -s, --silent                Silent mode
 
-  -h, --help              Show this usage
-  -v, --version           Show version
+  -h, --help                  Show this usage
+  -v, --version               Show version
 
 Accepted <mcp_server> formats:
   https://example.com/mcp [options]

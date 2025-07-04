@@ -1,8 +1,12 @@
 package parser
 
 import (
+	"bufio"
 	"errors"
+	"fmt"
+	"os"
 	"slices"
+	"strings"
 )
 
 var (
@@ -10,6 +14,7 @@ var (
 )
 
 type Parser struct {
+	Data    string
 	Headers []string
 	Help    bool
 	Silent  bool
@@ -22,7 +27,6 @@ type Parser struct {
 	resources bool
 
 	tool     string
-	data     string
 	prompt   string
 	resource string
 }
@@ -57,9 +61,17 @@ func (p *Parser) Parse(args []string) error {
 				case "-r", "--resource":
 					p.resource = args[i+1]
 				case "-d", "--data":
-					p.data = args[i+1]
+					data, err := p.parseData(args[i+1])
+					if err != nil {
+						return fmt.Errorf("parse data: %w", err)
+					}
+					p.Data = data
 				case "-H", "--header":
-					p.Headers = append(p.Headers, args[i+1])
+					headers, err := p.parseHeader(args[i+1])
+					if err != nil {
+						return fmt.Errorf("parse header: %w", err)
+					}
+					p.Headers = append(p.Headers, headers...)
 				}
 				i++
 			default:
@@ -90,14 +102,43 @@ func (p *Parser) Tool() string {
 	return p.tool
 }
 
-func (p *Parser) Data() string {
-	return p.data
-}
-
 func (p *Parser) Prompt() string {
 	return p.prompt
 }
 
 func (p *Parser) Resource() string {
 	return p.resource
+}
+
+func (p *Parser) parseData(arg string) (string, error) {
+	after, ok := strings.CutPrefix(arg, "@")
+	if !ok {
+		return after, nil
+	}
+	d, err := os.ReadFile(after)
+	if err != nil {
+		return "", fmt.Errorf("read data file: %w", err)
+	}
+	return strings.TrimSpace(string(d)), nil
+}
+
+func (p *Parser) parseHeader(header string) ([]string, error) {
+	var ret []string
+	after, ok := strings.CutPrefix(header, "@")
+	if !ok {
+		ret = append(ret, after)
+		return ret, nil
+	}
+	file, err := os.Open(after)
+	if err != nil {
+		return nil, fmt.Errorf("read header file: %w", err)
+	}
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		if h := strings.TrimSpace(scanner.Text()); h != "" {
+			ret = append(ret, h)
+		}
+	}
+	return ret, nil
 }
