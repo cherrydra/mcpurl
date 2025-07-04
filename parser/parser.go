@@ -45,10 +45,12 @@ func (p *Parser) Parse(args []string) error {
 			p.resources = true
 		case "-h", "--help":
 			p.Help = true
+			return nil
 		case "-s", "--silent":
 			p.Silent = true
 		case "-v", "--version":
 			p.Version = true
+			return nil
 		default:
 			switch arg {
 			case "-t", "--tool", "-p", "--prompt", "-r", "--resource", "-d", "--data", "-H", "--header", "-l", "--log-level":
@@ -84,6 +86,9 @@ func (p *Parser) Parse(args []string) error {
 				p.transportArgs = append(p.transportArgs, arg)
 			}
 		}
+	}
+	if len(p.transportArgs) == 0 {
+		return ErrInvalidUsage
 	}
 	return nil
 }
