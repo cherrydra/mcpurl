@@ -10,6 +10,7 @@ var (
 )
 
 type Parser struct {
+	Headers []string
 	Help    bool
 	Version bool
 
@@ -26,27 +27,25 @@ type Parser struct {
 }
 
 func (p *Parser) Parse(args []string) error {
-	parseSubCommand := func() error {
-		for i, arg := range args {
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		switch arg {
+		case "-T", "--tools":
+			p.tools = true
+		case "-P", "--prompts":
+			p.prompts = true
+		case "-R", "--resources":
+			p.resources = true
+		case "-h", "--help":
+			p.Help = true
+		case "-v", "--version":
+			p.Version = true
+		default:
 			switch arg {
-			case "-T", "-P", "-R", "--tools", "--prompts", "--resources":
-				p.transportArgs = append(p.transportArgs, args[:i]...)
-				p.transportArgs = append(p.transportArgs, args[i+1:]...)
-				switch arg {
-				case "-T", "--tools":
-					p.tools = true
-				case "-P", "--prompts":
-					p.prompts = true
-				case "-R", "--resources":
-					p.resources = true
-				}
-				return nil
-			case "-t", "-p", "-r", "--tool", "--prompt", "--resource":
+			case "-t", "--tool", "-p", "--prompt", "-r", "--resource", "-d", "--data", "-H", "--header":
 				if len(args) < i+2 {
 					return ErrInvalidUsage
 				}
-				p.transportArgs = append(p.transportArgs, args[:i]...)
-				p.transportArgs = append(p.transportArgs, args[i+2:]...)
 				switch arg {
 				case "-t", "--tool":
 					p.tool = args[i+1]
@@ -54,39 +53,16 @@ func (p *Parser) Parse(args []string) error {
 					p.prompt = args[i+1]
 				case "-r", "--resource":
 					p.resource = args[i+1]
+				case "-d", "--data":
+					p.data = args[i+1]
+				case "-H", "--header":
+					p.Headers = append(p.Headers, args[i+1])
 				}
-				return nil
-			case "-h", "--help":
-				p.Help = true
-				return nil
-			case "-v", "--version":
-				p.Version = true
-				return nil
+				i++
+			default:
+				p.transportArgs = append(p.transportArgs, arg)
 			}
 		}
-		return ErrInvalidUsage
-	}
-	if err := parseSubCommand(); err != nil {
-		return err
-	}
-	parseData := func() error {
-		args := slices.Clone(p.transportArgs)
-		for i, arg := range args {
-			switch arg {
-			case "-d", "--data":
-				if len(args) < i+2 {
-					return ErrInvalidUsage
-				}
-				p.transportArgs = append(p.transportArgs[:0], args[:i]...)
-				p.transportArgs = append(p.transportArgs, args[i+2:]...)
-				p.data = args[i+1]
-				return nil
-			}
-		}
-		return nil
-	}
-	if err := parseData(); err != nil {
-		return err
 	}
 	return nil
 }

@@ -1,15 +1,13 @@
 package main
 
 import (
-	"cmp"
 	"context"
 	"errors"
 	"fmt"
-	"net/url"
 	"os"
-	"os/exec"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/nasuci/mcpurl/cmd/mcpurl/transport"
 	"github.com/nasuci/mcpurl/parser"
 	"github.com/nasuci/mcpurl/version"
 )
@@ -45,23 +43,10 @@ func runE(run func() error) {
 }
 
 func runMain(parsed parser.Parser) error {
-	transportArgs := parsed.TransportArgs()
-	transportURL, err := url.Parse(transportArgs[0])
+	transport, err := transport.Transport(parsed)
 	if err != nil {
-		return fmt.Errorf("parse transport url: %w", err)
+		return fmt.Errorf("transport: %w", err)
 	}
-
-	var transport mcp.Transport
-	switch transportURL.Scheme {
-	case "", "stdio":
-		cmd := cmp.Or(transportURL.Host, transportURL.Path)
-		command := exec.Command(cmd, transportArgs[1:]...)
-		command.Stderr = os.Stderr
-		transport = mcp.NewCommandTransport(command)
-	default:
-		return fmt.Errorf("unsupportd transport url scheme: %s", transportURL.Scheme)
-	}
-
 	ctx := context.Background()
 	client := mcp.NewClient("mcpcurl", version.Short(), nil)
 	session, err := client.Connect(ctx, transport)
@@ -95,21 +80,24 @@ func printUsage() {
   mcpurl <options> <mcp_server>
 
 Currently supported transport:
+  http(s) (streamable http)
   stdio (standard input/output)
 
 Accepted <options>:
-  -T, --tools             list tools
-  -P, --prompts           list prompts
-  -R, --resources         list resources
-  -t, --tool <string>     call tool
-  -p, --prompt <string>   get prompt
-  -r, --resource <string> read resource
-  -d, --data <string>     send json data to server
+  -T, --tools             List tools
+  -P, --prompts           List prompts
+  -R, --resources         List resources
+  -t, --tool <string>     Call tool
+  -p, --prompt <string>   Get prompt
+  -r, --resource <string> Read resource
+  -d, --data <string>     Send json data to server
+  -H, --header <header>   Pass custom header(s) to server
 
-  -h, --help              show this usage
-  -v, --version           show version
+  -h, --help              Show this usage
+  -v, --version           Show version
 
 Accepted <mcp_server> formats:
+  https://example.com/mcp [options]
   stdio:///path/to/mcpserver [args]
   /path/to/mcpserver [args]`)
 }
