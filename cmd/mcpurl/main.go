@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -15,17 +16,27 @@ import (
 
 func main() {
 	parser := parser.Parser{}
+
 	runE(func() error {
 		return parser.Parse(os.Args[1:])
 	})
+
+	slog.SetLogLoggerLevel(parser.LogLevel)
+	if parser.Silent {
+		slog.SetLogLoggerLevel(slog.LevelError)
+	}
+	slog.Debug("Running in debug mode", "version", version.Short(), "go_version", version.GoVersion)
+
 	if parser.Help {
 		printUsage()
 		return
 	}
+
 	if parser.Version {
 		fmt.Println(version.GoVersion, version.Short())
 		return
 	}
+
 	runE(func() error {
 		return runMain(parser)
 	})
@@ -92,6 +103,7 @@ Accepted <options>:
   -s, --silent                Silent mode
 
   -h, --help                  Show this usage
+  -l, --log-level <level>     Set log level (debug, info, warn, error)
   -v, --version               Show version
 
 Accepted <mcp_server> formats:

@@ -1,6 +1,7 @@
 package transport
 
 import (
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -15,6 +16,7 @@ type mcpurlRoundTripper struct {
 
 func (r *mcpurlRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	r.parseHeadersOnce.Do(func() {
+		slog.Debug("Parsing headers", "headers", strings.Join(r.headers, ", "))
 		for _, header := range r.headers {
 			kv := strings.Split(header, ":")
 			if len(kv) != 2 {

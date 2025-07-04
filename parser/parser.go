@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"slices"
 	"strings"
@@ -14,11 +15,12 @@ var (
 )
 
 type Parser struct {
-	Data    string
-	Headers []string
-	Help    bool
-	Silent  bool
-	Version bool
+	Data     string
+	Headers  []string
+	Help     bool
+	LogLevel slog.Level
+	Silent   bool
+	Version  bool
 
 	transportArgs []string
 
@@ -49,7 +51,7 @@ func (p *Parser) Parse(args []string) error {
 			p.Version = true
 		default:
 			switch arg {
-			case "-t", "--tool", "-p", "--prompt", "-r", "--resource", "-d", "--data", "-H", "--header":
+			case "-t", "--tool", "-p", "--prompt", "-r", "--resource", "-d", "--data", "-H", "--header", "-l", "--log-level":
 				if len(args) < i+2 {
 					return ErrInvalidUsage
 				}
@@ -72,6 +74,10 @@ func (p *Parser) Parse(args []string) error {
 						return fmt.Errorf("parse header: %w", err)
 					}
 					p.Headers = append(p.Headers, headers...)
+				case "-l", "--log-level":
+					if err := p.LogLevel.UnmarshalText([]byte(args[i+1])); err != nil {
+						return fmt.Errorf("parse log level: %w", err)
+					}
 				}
 				i++
 			default:
