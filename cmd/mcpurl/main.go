@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -37,7 +38,7 @@ func runE(run func() error) {
 		os.Exit(2)
 	}
 	if err != nil {
-		fmt.Printf("Error: %s\n", err.Error())
+		json.NewEncoder(os.Stdout).Encode(map[string]string{"error": err.Error()})
 		os.Exit(1)
 	}
 }
@@ -79,10 +80,6 @@ func printUsage() {
 	fmt.Println(`Usage:
   mcpurl <options> <mcp_server>
 
-Currently supported transport:
-  http(s) (streamable http)
-  stdio (standard input/output)
-
 Accepted <options>:
   -T, --tools             List tools
   -P, --prompts           List prompts
@@ -92,6 +89,7 @@ Accepted <options>:
   -r, --resource <string> Read resource
   -d, --data <string>     Send json data to server
   -H, --header <header>   Pass custom header(s) to server
+  -s, --silent            Silent mode
 
   -h, --help              Show this usage
   -v, --version           Show version
@@ -99,5 +97,9 @@ Accepted <options>:
 Accepted <mcp_server> formats:
   https://example.com/mcp [options]
   stdio:///path/to/mcpserver [args]
-  /path/to/mcpserver [args]`)
+  /path/to/mcpserver [args]
+
+Currently supported transports:
+  http(s) (streamable http)
+  stdio   (standard input/output)`)
 }

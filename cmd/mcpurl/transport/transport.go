@@ -22,7 +22,9 @@ func Transport(parsed parser.Parser) (mcp.Transport, error) {
 	case "", "stdio":
 		cmd := cmp.Or(transportURL.Host, transportURL.Path)
 		command := exec.Command(cmd, transportArgs[1:]...)
-		command.Stderr = os.Stderr
+		if !parsed.Silent {
+			command.Stderr = os.Stderr
+		}
 		return mcp.NewCommandTransport(command), nil
 	case "http", "https":
 		return mcp.NewStreamableClientTransport(transportURL.String(), &mcp.StreamableClientTransportOptions{

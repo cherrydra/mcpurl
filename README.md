@@ -7,28 +7,32 @@ go install github.com/nasuci/mcpurl/cmd/mcpurl@latest
 ```
 
 ## Usage
-```
+```sh
 Usage:
   mcpurl <options> <mcp_server>
 
 Accepted <options>:
-  -T, --tools             list tools
-  -P, --prompts           list prompts
-  -R, --resources         list resources
-  -t, --tool <string>     call tool
-  -p, --prompt <string>   get prompt
-  -r, --resource <string> read resource
-  -d, --data <string>     send json data to server
+  -T, --tools             List tools
+  -P, --prompts           List prompts
+  -R, --resources         List resources
+  -t, --tool <string>     Call tool
+  -p, --prompt <string>   Get prompt
+  -r, --resource <string> Read resource
+  -d, --data <string>     Send json data to server
+  -H, --header <header>   Pass custom header(s) to server
+  -s, --silent            Silent mode
 
-  -h, --help              show this usage
-  -v, --version           show version
-
-Currently supported transport:
-  stdio (standard input/output)
+  -h, --help              Show this usage
+  -v, --version           Show version
 
 Accepted <mcp_server> formats:
-  stdio:///path/to/mcpserver [args]   # Explicit stdio scheme
-  /path/to/mcpserver [args]           # Implicit stdio scheme
+  https://example.com/mcp [options]
+  stdio:///path/to/mcpserver [args]
+  /path/to/mcpserver [args]
+
+Currently supported transports:
+  http(s) (streamable http)
+  stdio   (standard input/output)
 ```
 ### list tools
 ```sh

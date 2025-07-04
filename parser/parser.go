@@ -12,6 +12,7 @@ var (
 type Parser struct {
 	Headers []string
 	Help    bool
+	Silent  bool
 	Version bool
 
 	transportArgs []string
@@ -38,6 +39,8 @@ func (p *Parser) Parse(args []string) error {
 			p.resources = true
 		case "-h", "--help":
 			p.Help = true
+		case "-s", "--silent":
+			p.Silent = true
 		case "-v", "--version":
 			p.Version = true
 		default:
