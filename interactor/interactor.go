@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -34,6 +35,7 @@ func (i Interactor) Run(ctx context.Context) error {
 		InterruptPrompt: "^C",
 		EOFPrompt:       "exit",
 
+		HistoryFile:         historyFile(),
 		HistorySearchFold:   true,
 		FuncFilterInputRune: filterInput,
 	})
@@ -309,4 +311,12 @@ func filterInput(r rune) (rune, bool) {
 		return r, false
 	}
 	return r, true
+}
+
+func historyFile() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, ".mcpurl_history")
 }
