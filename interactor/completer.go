@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/cherrydra/mcpurl/features"
 	"github.com/chzyer/readline"
@@ -17,29 +18,39 @@ var (
 type mcpurlCompleter struct {
 	ctx context.Context
 	s   *features.ServerFeatures
+
+	once      sync.Once
+	completer *readline.PrefixCompleter
 }
 
 func (c *mcpurlCompleter) Do(line []rune, pos int) (newLine [][]rune, length int) {
-	completer := readline.NewPrefixCompleter(
-		readline.PcItem("tools"),
-		readline.PcItem("prompts"),
-		readline.PcItem("resources"),
-		readline.PcItem("tool", readline.PcItemDynamic(
-			c.listTools,
-			readline.PcItemDynamic(searchFiles)),
-		),
-		readline.PcItem("prompt", readline.PcItemDynamic(
-			c.listPrompts,
-			readline.PcItemDynamic(searchFiles)),
-		),
-		readline.PcItem("resource", readline.PcItemDynamic(
-			c.listResources),
-		),
-		readline.PcItem("clear"),
-		readline.PcItem("exit"),
-		readline.PcItem("help"),
-	)
-	return completer.Do(line, pos)
+	c.once.Do(func() {
+		c.completer = readline.NewPrefixCompleter(
+			readline.PcItem("tools"),
+			readline.PcItem("prompts"),
+			readline.PcItem("resources"),
+			readline.PcItem("tool", readline.PcItemDynamic(
+				c.listTools,
+				readline.PcItemDynamic(searchFiles)),
+			),
+			readline.PcItem("prompt", readline.PcItemDynamic(
+				c.listPrompts,
+				readline.PcItemDynamic(searchFiles)),
+			),
+			readline.PcItem("resource", readline.PcItemDynamic(
+				c.listResources),
+			),
+			readline.PcItem("cat"),
+			readline.PcItem("cd"),
+			readline.PcItem("clear"),
+			readline.PcItem("exit"),
+			readline.PcItem("help"),
+			readline.PcItem("ls"),
+			readline.PcItem("pwd"),
+			readline.PcItem("version"),
+		)
+	})
+	return c.completer.Do(line, pos)
 }
 
 func (c *mcpurlCompleter) listTools(prefix string) (ret []string) {

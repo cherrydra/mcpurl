@@ -183,27 +183,24 @@ func (i Interactor) executeMain(ctx context.Context, command string, out *os.Fil
 		}
 		return f.ReadResource(ctx, args[1])
 	case "cat":
-		if len(args) < 2 {
-			return parser.ErrInvalidUsage
-		}
-		file, err := os.Open(args[1])
-		if err != nil {
-			return fmt.Errorf("open file %s: %w", args[1], err)
-		}
-		defer file.Close()
-		io.Copy(out, file)
-		return nil
+		return i.readFile(out, args)
+	case "cd":
+		return i.chdir(args)
 	case "clear", "cls":
 		fmt.Print("\033[H\033[2J")
 		return nil
 	case "exit", "quit":
 		os.Exit(0)
 		return nil
-	case "help":
+	case "h", "help":
 		printUsage()
 		return nil
-	case "version":
-		fmt.Println(version.Short())
+	case "ls":
+		return i.listDir(out, args)
+	case "pwd":
+		return i.printPwd(out)
+	case "v", "version":
+		fmt.Fprintln(out, version.Short())
 		return nil
 	default:
 		return parser.ErrInvalidUsage
@@ -229,6 +226,60 @@ func (i Interactor) executePipe(ctx context.Context, pipePart string, in *os.Fil
 	return command.Run()
 }
 
+func (i Interactor) chdir(args []string) error {
+	dir := "."
+	if len(args) > 1 {
+		dir = args[1]
+	}
+	return os.Chdir(dir)
+}
+
+func (i Interactor) listDir(out *os.File, args []string) error {
+	dir := "."
+	for _, arg := range args[1:] {
+		if !strings.HasPrefix(arg, "-") {
+			dir = arg
+			break
+		}
+	}
+	items, err := os.ReadDir(dir)
+	if err != nil {
+		return fmt.Errorf("read directory: %w", err)
+	}
+	for _, item := range items {
+		if item.IsDir() {
+			fmt.Fprintf(out, "%s/\n", item.Name())
+			continue
+		}
+		fmt.Fprintf(out, "%s\n", item.Name())
+	}
+	return nil
+}
+
+func (i Interactor) printPwd(out *os.File) error {
+	dir, err := os.Getwd()
+	if err != nil {
+		return fmt.Errorf("get current directory: %w", err)
+	}
+	fmt.Fprintln(out, dir)
+	return nil
+}
+
+func (i *Interactor) readFile(out *os.File, args []string) error {
+	if len(args) < 2 {
+		return parser.ErrInvalidUsage
+	}
+	file, err := os.Open(args[1])
+	if err != nil {
+		return fmt.Errorf("open file %s: %w", args[1], err)
+	}
+	defer file.Close()
+	if _, err := io.Copy(out, file); err != nil {
+		return fmt.Errorf("read file %s: %w", args[1], err)
+	}
+	return nil
+}
+
 func printUsage() {
 	fmt.Println(`Usage:
   tools                   List tools
@@ -239,11 +290,14 @@ func printUsage() {
   resource <name>         Read resource
 
   cat <file>              Read file
+  cd [dir]                Change working directory
   clear                   Clear the screen
   exit       	          Exit the interactor
   help                    Show this help message
+  ls [dir]                List files in directory
+  pwd                     Print current working directory
   version                 Show version information
- 
+
 supports command pipelining and redirection:
   tools | jq .name > tools.txt`)
 }
