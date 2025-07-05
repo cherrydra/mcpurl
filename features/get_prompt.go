@@ -17,6 +17,10 @@ func (s *ServerFeatures) GetPrompt(ctx context.Context, prompt, data string) err
 			return fmt.Errorf("unmarshal prompt arguments: %w", err)
 		}
 	}
+	return s.GetPrompt1(ctx, prompt, params)
+}
+
+func (s *ServerFeatures) GetPrompt1(ctx context.Context, prompt string, params map[string]string) error {
 	result, err := s.Session.GetPrompt(ctx, &mcp.GetPromptParams{
 		Name:      prompt,
 		Arguments: params,

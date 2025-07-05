@@ -4,11 +4,13 @@ import (
 	"cmp"
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 
@@ -159,31 +161,18 @@ func (i Interactor) executeMain(ctx context.Context, command string, out *os.Fil
 		f.Out = out
 	}
 	switch args[0] {
-	case "tools":
+	case "T", "tools":
 		return f.PrintTools(ctx)
-	case "prompts":
+	case "P", "prompts":
 		return f.PrintPrompts(ctx)
-	case "resources":
+	case "R", "resources":
 		return f.PrintResources(ctx)
-	case "tool", "prompt", "resource":
-		if len(args) < 2 {
-			return parser.ErrInvalidUsage
-		}
-		var data string
-		if len(args) > 2 {
-			data = args[2]
-		}
-		after, err := parser.Parser{}.ParseData(data)
-		if err != nil {
-			return fmt.Errorf("parse data: %w", err)
-		}
-		if args[0] == "tool" {
-			return f.CallTool(ctx, args[1], after)
-		}
-		if args[0] == "prompt" {
-			return f.GetPrompt(ctx, args[1], after)
-		}
-		return f.ReadResource(ctx, args[1])
+	case "t", "tool":
+		return i.callTool(ctx, f, args)
+	case "p", "prompt":
+		return i.getPrompt(ctx, f, args)
+	case "r", "resource":
+		return i.readResource(ctx, f, args)
 	case "cat":
 		return i.readFile(out, args)
 	case "cd":
@@ -282,13 +271,109 @@ func (i *Interactor) readFile(out *os.File, args []string) error {
 	return nil
 }
 
+func (i Interactor) callTool(ctx context.Context, f features.ServerFeatures, args []string) error {
+	if len(args) < 2 {
+		return parser.ErrInvalidUsage
+	}
+
+	flags := flag.NewFlagSet(args[1], flag.ContinueOnError)
+	arguments := map[string]any{}
+	tools, err := f.ListTools(ctx)
+	if err != nil {
+		return fmt.Errorf("list tools: %w", err)
+	}
+	for _, tool := range tools {
+		if tool.Name != args[1] {
+			continue
+		}
+		flags.Usage = func() {
+			fmt.Fprintf(os.Stderr, "Usage: %s [options]\n\n", tool.Name)
+			fmt.Fprintf(os.Stderr, "%s\n\n", tool.Description)
+			fmt.Fprintln(os.Stderr, "Options:")
+			flags.PrintDefaults()
+		}
+		for prop, v := range tool.InputSchema.Properties {
+			p := new(string)
+			arguments[prop] = p
+			if slices.Contains(tool.InputSchema.Required, prop) {
+				v.Description = fmt.Sprintf("%s (required)", cmp.Or(v.Description, v.Title))
+			} else {
+				v.Description = fmt.Sprintf("%s (optional)", cmp.Or(v.Description, v.Title))
+			}
+			flags.StringVar(p, prop, "", v.Description)
+		}
+	}
+	if err := flags.Parse(args[2:]); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
+		return fmt.Errorf("parse flags: %w", err)
+	}
+	return f.CallTool1(ctx, args[1], arguments)
+}
+
+func (i *Interactor) getPrompt(ctx context.Context, f features.ServerFeatures, args []string) error {
+	if len(args) < 2 {
+		return parser.ErrInvalidUsage
+	}
+
+	flags := flag.NewFlagSet(args[1], flag.ContinueOnError)
+	arguments := map[string]*string{}
+
+	prompts, err := f.ListPrompts(ctx)
+	if err != nil {
+		return fmt.Errorf("list prompts: %w", err)
+	}
+	for _, prompt := range prompts {
+		if prompt.Name != args[1] {
+			continue
+		}
+		flags.Usage = func() {
+			fmt.Fprintf(os.Stderr, "Usage: %s [options]\n\n", prompt.Name)
+			fmt.Fprintf(os.Stderr, "%s\n\n", prompt.Description)
+			fmt.Fprintln(os.Stderr, "Options:")
+			flags.PrintDefaults()
+		}
+		for _, prop := range prompt.Arguments {
+			p := new(string)
+			arguments[prop.Name] = p
+			if prop.Required {
+				prop.Description = fmt.Sprintf("%s (required)", prop.Description)
+			} else {
+				prop.Description = fmt.Sprintf("%s (optional)", prop.Description)
+			}
+			flags.StringVar(p, prop.Name, "", prop.Description)
+		}
+	}
+	if err := flags.Parse(args[2:]); err != nil {
+		if errors.Is(err, flag.ErrHelp) {
+			return nil
+		}
+		return fmt.Errorf("parse flags: %w", err)
+	}
+	params := map[string]string{}
+	for k, v := range arguments {
+		if v != nil {
+			params[k] = *v
+		}
+	}
+	return f.GetPrompt1(ctx, args[1], params)
+}
+
+func (i Interactor) readResource(ctx context.Context, f features.ServerFeatures, args []string) error {
+	if len(args) < 2 {
+		return parser.ErrInvalidUsage
+	}
+	return f.ReadResource(ctx, args[1])
+}
+
 func printUsage() {
 	fmt.Println(`Usage:
   tools                   List tools
   prompts                 List prompts
   resources               List resources
-  tool <name> [data]      Call tool
-  prompt <name> [data]    Get prompt
+  tool <name> [options]   Call tool
+  prompt <name> [options] Get prompt
   resource <name>         Read resource
 
   cat <file>              Read file
@@ -300,7 +385,7 @@ func printUsage() {
   pwd                     Print current working directory
   version                 Show version information
 
-supports command pipelining and redirection:
+Supports command pipelining and stdout redirection:
   tools | jq .name > tools.txt`)
 }
 

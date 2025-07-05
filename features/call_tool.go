@@ -17,6 +17,10 @@ func (s *ServerFeatures) CallTool(ctx context.Context, tool, data string) error 
 			return fmt.Errorf("unmarshal tool arguments: %w", err)
 		}
 	}
+	return s.CallTool1(ctx, tool, params)
+}
+
+func (s *ServerFeatures) CallTool1(ctx context.Context, tool string, params map[string]any) error {
 	result, err := s.Session.CallTool(ctx, &mcp.CallToolParams{
 		Name:      tool,
 		Arguments: params,

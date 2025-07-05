@@ -52,14 +52,21 @@ Usage:
   tools                   List tools
   prompts                 List prompts
   resources               List resources
-  tool <name> [data]      Call tool
-  prompt <name> [data]    Get prompt
+  tool <name> [options]   Call tool
+  prompt <name> [options] Get prompt
   resource <name>         Read resource
 
   cat <file>              Read file
+  cd [dir]                Change working directory
   clear                   Clear the screen
   exit                    Exit the interactor
   help                    Show this help message
+  ls [dir]                List files in directory
+  pwd                     Print current working directory
+  version                 Show version information
+
+Supports command pipelining and stdout redirection:
+  tools | jq .name > tools.txt
 ```
 ### Pipe / stdout redirect operator
 ```sh
