@@ -57,22 +57,28 @@ func runE(run func() error) {
 }
 
 func runMain(parsed parser.Parser) error {
-	transport, err := transport.Transport(parsed)
-	if err != nil {
+	clientTransport, err := transport.Transport(parsed)
+	if err != nil && !errors.Is(err, transport.ErrNoTransport) {
 		return fmt.Errorf("transport: %w", err)
 	}
 	ctx := context.Background()
-	client := mcp.NewClient("mcpcurl", version.Short(), nil)
-	session, err := client.Connect(ctx, transport)
-	if err != nil {
-		return fmt.Errorf("connect mcp server: %w", err)
+	var session *mcp.ClientSession
+	if err == nil {
+		client := mcp.NewClient("mcpcurl", version.Short(), nil)
+		if session, err = client.Connect(ctx, clientTransport); err != nil {
+			return fmt.Errorf("connect mcp server: %w", err)
+		}
+		defer session.Close()
 	}
-	defer session.Close()
 
 	if parsed.Interactive {
-		return interactor.Interactor{
+		return (&interactor.Interactor{
 			Session: session,
-		}.Run(ctx)
+		}).Run(ctx)
+	}
+
+	if session == nil {
+		return parser.ErrInvalidUsage
 	}
 
 	f := features.ServerFeatures{Session: session}
@@ -119,8 +125,7 @@ Accepted <options>:
 
 Accepted <mcp_server> formats:
   https://example.com/mcp [options]
-  stdio:///path/to/mcpserver [args]
-  /path/to/mcpserver [args]
+  stdio:///path/to/mcpserver [args] (or simply /path/to/mcpserver [args])
 
 Currently supported transports:
   http(s) (streamable http)

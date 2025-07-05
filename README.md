@@ -28,8 +28,7 @@ Accepted <options>:
 
 Accepted <mcp_server> formats:
   https://example.com/mcp [options]
-  stdio:///path/to/mcpserver [args]
-  /path/to/mcpserver [args]
+  stdio:///path/to/mcpserver [args] (or simply /path/to/mcpserver [args])
 
 Currently supported transports:
   http(s) (streamable http)
@@ -49,21 +48,24 @@ mcpurl --tool list_directory -d '{"path": ""}' docker run -i --rm mcp/filesystem
 mcpurl docker run -i --rm mcp/filesystem . -I
 mcpurl> help
 Usage:
-  tools                   List tools
-  prompts                 List prompts
-  resources               List resources
-  tool <name> [options]   Call tool
-  prompt <name> [options] Get prompt
-  resource <name>         Read resource
+  connect [options] <mcp_server>  Connect to server
+  disconnect                      Disconnect from server
+  status                          Show connection info
+  tools                           List tools
+  prompts                         List prompts
+  resources                       List resources
+  tool <name> [options]           Call tool
+  prompt <name> [options]         Get prompt
+  resource <name>                 Read resource
 
-  cat <file>              Read file
-  cd [dir]                Change working directory
-  clear                   Clear the screen
-  exit                    Exit the interactor
-  help                    Show this help message
-  ls [dir]                List files in directory
-  pwd                     Print current working directory
-  version                 Show version information
+  cat <file>                      Read file
+  cd [dir]                        Change working directory
+  clear                           Clear the screen
+  exit                            Exit the interactor
+  help                            Show this help message
+  ls [dir]                        List files in directory
+  pwd                             Print current working directory
+  version                         Show version information
 
 Supports command pipelining and stdout redirection:
   tools | jq .name > tools.txt
