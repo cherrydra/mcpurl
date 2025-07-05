@@ -1,6 +1,7 @@
 package interactor
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -65,7 +66,33 @@ func (i Interactor) Run(ctx context.Context) error {
 }
 
 func (ia Interactor) executeCommand(ctx context.Context, command string) (err error) {
-	pipeParts := strings.Split(command, "|")
+	// io redirect
+	redirAppendParts := strings.Split(command, ">>")
+	redirCreateParts := strings.Split(redirAppendParts[0], ">")
+	var redirPart, redirMode string
+	if len(redirAppendParts) > 1 {
+		redirPart = strings.TrimSpace(redirAppendParts[len(redirAppendParts)-1])
+		redirMode = "append"
+	} else if len(redirCreateParts) > 1 {
+		redirPart = strings.TrimSpace(redirCreateParts[len(redirCreateParts)-1])
+		redirMode = "create"
+	}
+	stdout := os.Stdout
+	switch redirMode {
+	case "append":
+		stdout, err = os.OpenFile(redirPart, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			return fmt.Errorf("open file for append: %w", err)
+		}
+	case "create":
+		stdout, err = os.Create(redirPart)
+		if err != nil {
+			return fmt.Errorf("create file: %w", err)
+		}
+	}
+
+	// pipeline
+	pipeParts := strings.Split(redirCreateParts[0], "|")
 
 	var nextIn, out *os.File
 	if len(pipeParts) > 1 {
@@ -80,13 +107,13 @@ func (ia Interactor) executeCommand(ctx context.Context, command string) (err er
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		if err := ia.executeMain(ctx, strings.TrimSpace(pipeParts[0]), out); err != nil {
+		if err := ia.executeMain(ctx, strings.TrimSpace(pipeParts[0]), cmp.Or(out, stdout)); err != nil {
 			errChan <- err
 		}
 	}()
 	for i, part := range pipeParts[1:] {
 		thisIn := nextIn
-		thisOut := os.Stdout
+		thisOut := stdout
 		if i < len(pipeParts)-2 {
 			nextIn, thisOut, err = os.Pipe()
 			if err != nil {
@@ -125,7 +152,7 @@ func (i Interactor) executeMain(ctx context.Context, command string, out *os.Fil
 		return parser.ErrInvalidUsage
 	}
 	f := features.ServerFeatures{Session: i.Session}
-	if out != nil {
+	if out.Fd() != os.Stdout.Fd() {
 		defer out.Close()
 		f.Out = out
 	}
@@ -155,6 +182,17 @@ func (i Interactor) executeMain(ctx context.Context, command string, out *os.Fil
 			return f.GetPrompt(ctx, args[1], after)
 		}
 		return f.ReadResource(ctx, args[1])
+	case "cat":
+		if len(args) < 2 {
+			return parser.ErrInvalidUsage
+		}
+		file, err := os.Open(args[1])
+		if err != nil {
+			return fmt.Errorf("open file %s: %w", args[1], err)
+		}
+		defer file.Close()
+		io.Copy(out, file)
+		return nil
 	case "clear", "cls":
 		fmt.Print("\033[H\033[2J")
 		return nil
@@ -200,10 +238,14 @@ func printUsage() {
   prompt <name> [data]    Get prompt
   resource <name>         Read resource
 
+  cat <file>              Read file
   clear                   Clear the screen
   exit       	          Exit the interactor
   help                    Show this help message
-  version                 Show version information`)
+  version                 Show version information
+ 
+supports command pipelining and redirection:
+  tools | jq .name > tools.txt`)
 }
 
 func filterInput(r rune) (rune, bool) {

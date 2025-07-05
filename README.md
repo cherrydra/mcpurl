@@ -56,14 +56,16 @@ Usage:
   prompt <name> [data]    Get prompt
   resource <name>         Read resource
 
+  cat <file>              Read file
   clear                   Clear the screen
   exit                    Exit the interactor
   help                    Show this help message
 ```
-### Pipe operator
+### Pipe / stdout redirect operator
 ```sh
 mcpurl docker run -i --rm mcp/filesystem . -I
-mcpurl> tools | jq .name
+mcpurl> tools | jq -r .name > tools.txt
+mcpurl> cat tools.txt
 read_file
 read_multiple_files
 write_file
