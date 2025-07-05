@@ -5,9 +5,9 @@ import (
 	"os"
 	"strings"
 
+	"github.com/cherrydra/mcpurl/features"
 	"github.com/chzyer/readline"
 	"github.com/google/shlex"
-	"github.com/nasuci/mcpurl/features"
 )
 
 var (

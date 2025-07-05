@@ -1,4 +1,4 @@
-module github.com/nasuci/mcpurl
+module github.com/cherrydra/mcpurl
 
 go 1.24
 

@@ -8,8 +8,8 @@ import (
 	"os"
 	"os/exec"
 
+	"github.com/cherrydra/mcpurl/parser"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/nasuci/mcpurl/parser"
 )
 
 func Transport(parsed parser.Parser) (mcp.Transport, error) {

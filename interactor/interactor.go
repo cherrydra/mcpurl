@@ -11,12 +11,12 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/cherrydra/mcpurl/features"
+	"github.com/cherrydra/mcpurl/parser"
+	"github.com/cherrydra/mcpurl/version"
 	"github.com/chzyer/readline"
 	"github.com/google/shlex"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/nasuci/mcpurl/features"
-	"github.com/nasuci/mcpurl/parser"
-	"github.com/nasuci/mcpurl/version"
 )
 
 var (

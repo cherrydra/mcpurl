@@ -3,7 +3,7 @@ Like cURL but for MCP.
 
 ## Install
 ```sh
-go install github.com/nasuci/mcpurl/cmd/mcpurl@latest
+go install github.com/cherrydra/mcpurl/cmd/mcpurl@latest
 ```
 
 ## Usage

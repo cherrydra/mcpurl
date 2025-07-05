@@ -8,12 +8,12 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/cherrydra/mcpurl/features"
+	"github.com/cherrydra/mcpurl/interactor"
+	"github.com/cherrydra/mcpurl/parser"
+	"github.com/cherrydra/mcpurl/transport"
+	"github.com/cherrydra/mcpurl/version"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/nasuci/mcpurl/features"
-	"github.com/nasuci/mcpurl/interactor"
-	"github.com/nasuci/mcpurl/parser"
-	"github.com/nasuci/mcpurl/transport"
-	"github.com/nasuci/mcpurl/version"
 )
 
 func main() {
