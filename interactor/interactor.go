@@ -54,16 +54,21 @@ func (i *Interactor) Run(ctx context.Context) error {
 
 	for {
 		line, err := l.Readline()
+		if err == io.EOF {
+			break
+		}
 		if err == readline.ErrInterrupt {
 			if len(line) == 0 {
 				break
 			} else {
 				continue
 			}
-		} else if err == io.EOF {
-			break
 		}
-		if err := i.executeCommand(ctx, strings.TrimSpace(line)); err != nil {
+		command := strings.TrimSpace(line)
+		if command == "" {
+			continue
+		}
+		if err := i.executeCommand(ctx, command); err != nil {
 			if errors.Is(err, parser.ErrInvalidUsage) {
 				printUsage()
 				continue
@@ -434,15 +439,15 @@ func (i *Interactor) showStatus(out *os.File) error {
 
 func printUsage() {
 	fmt.Println(`Usage:
-  connect [options] <mcp_server>  Connect to server
-  disconnect                      Disconnect from server
-  status                          Show connection info
   tools                           List tools
   prompts                         List prompts
   resources                       List resources
   tool <name> [options]           Call tool
   prompt <name> [options]         Get prompt
   resource <name>                 Read resource
+  connect <mcp_server> [options]  Connect to server
+  disconnect                      Disconnect from server
+  status                          Show connection info
 
   cat <file>                      Read file
   cd [dir]                        Change working directory
@@ -450,7 +455,7 @@ func printUsage() {
   exit                            Exit the interactor
   help                            Show this help message
   ls [dir]                        List files in directory
-  pwd                             Print current working directory
+  pwd                             Print working directory
   version                         Show version information
 
 Supports command pipelining and stdout redirection:

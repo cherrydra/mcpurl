@@ -48,15 +48,15 @@ mcpurl --tool list_directory -d '{"path": ""}' docker run -i --rm mcp/filesystem
 mcpurl docker run -i --rm mcp/filesystem . -I
 mcpurl> help
 Usage:
-  connect [options] <mcp_server>  Connect to server
-  disconnect                      Disconnect from server
-  status                          Show connection info
   tools                           List tools
   prompts                         List prompts
   resources                       List resources
   tool <name> [options]           Call tool
   prompt <name> [options]         Get prompt
   resource <name>                 Read resource
+  connect <mcp_server> [options]  Connect to server
+  disconnect                      Disconnect from server
+  status                          Show connection info
 
   cat <file>                      Read file
   cd [dir]                        Change working directory
@@ -64,7 +64,7 @@ Usage:
   exit                            Exit the interactor
   help                            Show this help message
   ls [dir]                        List files in directory
-  pwd                             Print current working directory
+  pwd                             Print working directory
   version                         Show version information
 
 Supports command pipelining and stdout redirection:
