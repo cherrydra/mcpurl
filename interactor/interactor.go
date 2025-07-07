@@ -31,6 +31,7 @@ var (
 type Interactor struct {
 	Session *mcp.ClientSession
 
+	server    string
 	completer *mcpurlCompleter
 }
 
@@ -411,6 +412,7 @@ func (i *Interactor) connect(ctx context.Context, args []string, out *os.File) e
 	}
 	i.Session = session
 	i.completer.s.Session = session
+	i.server = strings.Join(parsed.TransportArgs(), " ")
 	return i.showStatus(out)
 }
 
@@ -421,6 +423,7 @@ func (i *Interactor) disconnect(_ context.Context, out *os.File) error {
 	json.NewEncoder(out).Encode(map[string]string{"msg": "disconnecting"})
 	i.Session.Close()
 	i.Session = nil
+	i.server = ""
 	return i.showStatus(out)
 }
 
@@ -433,7 +436,7 @@ func (i *Interactor) showStatus(out *os.File) error {
 			status = "connected"
 		}
 	}
-	json.NewEncoder(out).Encode(map[string]string{"status": status})
+	json.NewEncoder(out).Encode(map[string]string{"server": i.server, "status": status})
 	return nil
 }
 
