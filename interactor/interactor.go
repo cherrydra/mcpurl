@@ -180,7 +180,7 @@ func (i *Interactor) executeMain(ctx context.Context, command string, out *os.Fi
 	case "disconnect":
 		return i.disconnect(ctx, out)
 	case "s", "status":
-		return i.showStatus(out)
+		return i.showStatus(ctx, out)
 	case "T", "tools":
 		return f.PrintTools(ctx)
 	case "P", "prompts":
@@ -413,10 +413,10 @@ func (i *Interactor) connect(ctx context.Context, args []string, out *os.File) e
 	i.Session = session
 	i.completer.s.Session = session
 	i.server = strings.Join(parsed.TransportArgs(), " ")
-	return i.showStatus(out)
+	return i.showStatus(ctx, out)
 }
 
-func (i *Interactor) disconnect(_ context.Context, out *os.File) error {
+func (i *Interactor) disconnect(ctx context.Context, out *os.File) error {
 	if i.Session == nil {
 		return nil
 	}
@@ -424,16 +424,19 @@ func (i *Interactor) disconnect(_ context.Context, out *os.File) error {
 	i.Session.Close()
 	i.Session = nil
 	i.server = ""
-	return i.showStatus(out)
+	return i.showStatus(ctx, out)
 }
 
-func (i *Interactor) showStatus(out *os.File) error {
+func (i *Interactor) showStatus(ctx context.Context, out *os.File) error {
 	status := features.ErrNoSession.Error()
 	if i.Session != nil {
 		if sid := i.Session.ID(); sid != "" {
 			status = fmt.Sprintf("connected (%s)", sid)
 		} else {
 			status = "connected"
+		}
+		if err := i.Session.Ping(ctx, nil); err != nil {
+			status = "unhealth"
 		}
 	}
 	json.NewEncoder(out).Encode(map[string]string{"server": i.server, "status": status})
