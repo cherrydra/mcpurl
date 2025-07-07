@@ -40,18 +40,20 @@ func (c *mcpurlCompleter) Do(line []rune, pos int) (newLine [][]rune, length int
 			readline.PcItem("resource", readline.PcItemDynamic(
 				c.listResources),
 			),
+			readline.PcItem("msg"),
+			readline.PcItem("ctx", readline.PcItem("clear")),
+			readline.PcItem("connect"),
+			readline.PcItem("disconnect"),
+			readline.PcItem("status"),
 			readline.PcItem("cat"),
 			readline.PcItem("cd"),
 			readline.PcItem("clear"),
-			readline.PcItem("connect"),
-			readline.PcItem("disconnect"),
 			readline.PcItem("exit"),
 			readline.PcItem("export"),
 			readline.PcItem("env"),
 			readline.PcItem("help"),
 			readline.PcItem("ls"),
 			readline.PcItem("pwd"),
-			readline.PcItem("status"),
 			readline.PcItem("version"),
 		)
 	})

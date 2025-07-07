@@ -7,13 +7,17 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"strings"
 
 	"github.com/cherrydra/mcpurl/features"
 	"github.com/cherrydra/mcpurl/interactor"
+	"github.com/cherrydra/mcpurl/llm"
 	"github.com/cherrydra/mcpurl/parser"
 	"github.com/cherrydra/mcpurl/transport"
 	"github.com/cherrydra/mcpurl/version"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/option"
 )
 
 func main() {
@@ -71,9 +75,23 @@ func runMain(parsed parser.Parser) error {
 		defer session.Close()
 	}
 
+	var L *llm.LLM
+	if parsed.LLMBaseURL != "" {
+		client := openai.NewClient(
+			option.WithBaseURL(parsed.LLMBaseURL),
+			option.WithAPIKey(parsed.LLMApiKey),
+		)
+		L = &llm.LLM{
+			Client: &client,
+			Model:  parsed.LLMName,
+		}
+	}
+
 	if parsed.Interactive {
 		return (&interactor.Interactor{
 			Session: session,
+			Server:  strings.Join(parsed.TransportArgs(), " "),
+			LLM:     L,
 		}).Run(ctx)
 	}
 
@@ -101,6 +119,12 @@ func runMain(parsed parser.Parser) error {
 	if parsed.Resource() != "" {
 		return f.ReadResource(ctx, parsed.Resource())
 	}
+	if parsed.Msg != "" {
+		if L == nil {
+			return llm.ErrDisabled
+		}
+		return L.Msg(ctx, f, parsed.Msg, os.Stdout)
+	}
 	return parser.ErrInvalidUsage
 }
 
@@ -119,7 +143,11 @@ Accepted <options>:
   -H, --header <header/@file> Pass custom header(s) to server
   -h, --help                  Show this usage
   -I, --interactive           Start interactive mode
+  -K, --llm-api-key <key>     API key for authenticating with the LLM
+  -L, --llm-base-url <url>    Base URL of the LLM service
+  -M, --llm-name <name>       Name of the LLM model to use
   -l, --log-level <level>     Set log level (debug, info, warn, error)
+  -m, --msg <message>         Talk to LLM
   -s, --silent                Silent mode
   -v, --version               Show version
 

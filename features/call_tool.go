@@ -38,3 +38,24 @@ func (s *ServerFeatures) CallTool1(ctx context.Context, tool string, params map[
 	}
 	return nil
 }
+
+func (s ServerFeatures) CallTool2(ctx context.Context, tool string, arguments string) (mcp.Content, error) {
+	if s.Session == nil {
+		return nil, ErrNoSession
+	}
+	params := map[string]any{}
+	if arguments != "" {
+		if err := json.Unmarshal([]byte(arguments), &params); err != nil {
+			return nil, fmt.Errorf("unmarshal tool arguments: %w", err)
+		}
+	}
+	result, err := s.Session.CallTool(ctx, &mcp.CallToolParams{
+		Name:      tool,
+		Arguments: params,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("call tool: %w", err)
+	}
+
+	return result.Content[0], nil
+}

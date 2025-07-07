@@ -16,6 +16,7 @@ import (
 	"sync"
 
 	"github.com/cherrydra/mcpurl/features"
+	"github.com/cherrydra/mcpurl/llm"
 	"github.com/cherrydra/mcpurl/parser"
 	"github.com/cherrydra/mcpurl/transport"
 	"github.com/cherrydra/mcpurl/version"
@@ -30,8 +31,9 @@ var (
 
 type Interactor struct {
 	Session *mcp.ClientSession
+	Server  string
+	LLM     *llm.LLM
 
-	server    string
 	completer *mcpurlCompleter
 }
 
@@ -175,6 +177,10 @@ func (i *Interactor) executeMain(ctx context.Context, command string, out *os.Fi
 		f.Out = out
 	}
 	switch args[0] {
+	case "m", "msg":
+		return i.msg(ctx, f, out, args)
+	case "ctx":
+		return i.modelContext(ctx, out, args)
 	case "c", "connect":
 		return i.connect(ctx, args, out)
 	case "disconnect":
@@ -220,6 +226,31 @@ func (i *Interactor) executeMain(ctx context.Context, command string, out *os.Fi
 	default:
 		return parser.ErrInvalidUsage
 	}
+}
+
+func (i *Interactor) msg(ctx context.Context, f features.ServerFeatures, out *os.File, args []string) error {
+	if len(args) < 2 {
+		return parser.ErrInvalidUsage
+	}
+	if i.LLM == nil {
+		return fmt.Errorf("llm disabled")
+	}
+	return i.LLM.Msg(ctx, f, args[1], out)
+}
+
+func (i *Interactor) modelContext(_ context.Context, out *os.File, args []string) error {
+	if i.LLM == nil {
+		return llm.ErrDisabled
+	}
+	if len(args) < 2 {
+		return parser.ErrInvalidUsage
+	}
+	switch args[1] {
+	case "clear":
+		i.LLM.ClearContext()
+		return nil
+	}
+	return parser.ErrInvalidUsage
 }
 
 func (i *Interactor) executePipe(ctx context.Context, pipePart string, in *os.File, out *os.File) error {
@@ -443,8 +474,8 @@ func (i *Interactor) connect(ctx context.Context, args []string, out *os.File) e
 		i.Session.Close()
 	}
 	i.Session = session
+	i.Server = strings.Join(parsed.TransportArgs(), " ")
 	i.completer.s.Session = session
-	i.server = strings.Join(parsed.TransportArgs(), " ")
 	return i.showStatus(ctx, out)
 }
 
@@ -455,7 +486,7 @@ func (i *Interactor) disconnect(ctx context.Context, out *os.File) error {
 	json.NewEncoder(out).Encode(map[string]string{"msg": "disconnecting"})
 	i.Session.Close()
 	i.Session = nil
-	i.server = ""
+	i.Server = ""
 	return i.showStatus(ctx, out)
 }
 
@@ -471,22 +502,26 @@ func (i *Interactor) showStatus(ctx context.Context, out *os.File) error {
 			status = "unhealth"
 		}
 	}
-	json.NewEncoder(out).Encode(map[string]string{"server": i.server, "status": status})
+	s := map[string]string{"server": i.Server, "status": status}
+	json.NewEncoder(out).Encode(s)
 	return nil
 }
 
 func printUsage() {
-	fmt.Println(`Usage:
+	fmt.Println(`Available Commands:
   tools                           List tools
   prompts                         List prompts
   resources                       List resources
   tool <name> [options]           Call tool
   prompt <name> [options]         Get prompt
   resource <name>                 Read resource
+  ctx <subcmd>                    LLM context operations
+  msg <message>                   Talk to LLM
   connect <mcp_server> [options]  Connect to server
   disconnect                      Disconnect from server
   status                          Show connection info
 
+System Commands:
   cat <file>                      Read file
   cd [dir]                        Change working directory
   clear                           Clear the screen

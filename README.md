@@ -22,7 +22,11 @@ Accepted <options>:
   -H, --header <header/@file> Pass custom header(s) to server
   -h, --help                  Show this usage
   -I, --interactive           Start interactive mode
+  -K, --llm-api-key <key>     API key for authenticating with the LLM
+  -L, --llm-base-url <url>    Base URL of the LLM service
+  -M, --llm-name <name>       Name of the LLM model to use
   -l, --log-level <level>     Set log level (debug, info, warn, error)
+  -m, --msg <message>         Talk to LLM
   -s, --silent                Silent mode
   -v, --version               Show version
 
@@ -47,17 +51,20 @@ mcpurl --tool list_directory -d '{"path": ""}' docker run -i --rm mcp/filesystem
 ```sh
 mcpurl docker run -i --rm mcp/filesystem . -I
 mcpurl> help
-Usage:
+Available Commands:
   tools                           List tools
   prompts                         List prompts
   resources                       List resources
   tool <name> [options]           Call tool
   prompt <name> [options]         Get prompt
   resource <name>                 Read resource
+  ctx <subcmd>                    LLM context operations
+  msg <message>                   Talk to LLM
   connect <mcp_server> [options]  Connect to server
   disconnect                      Disconnect from server
   status                          Show connection info
 
+System Commands:
   cat <file>                      Read file
   cd [dir]                        Change working directory
   clear                           Clear the screen

@@ -20,6 +20,10 @@ type Parser struct {
 	Help        bool
 	Interactive bool
 	LogLevel    slog.Level
+	LLMBaseURL  string
+	LLMApiKey   string
+	LLMName     string
+	Msg         string
 	Silent      bool
 	Version     bool
 
@@ -57,7 +61,8 @@ func (p *Parser) Parse(args []string) error {
 			return nil
 		default:
 			switch arg {
-			case "-t", "--tool", "-p", "--prompt", "-r", "--resource", "-d", "--data", "-H", "--header", "-l", "--log-level":
+			case "-t", "--tool", "-p", "--prompt", "-r", "--resource", "-d", "--data", "-H", "--header", "-l", "--log-level",
+				"-K", "--llm-api-key", "-L", "--llm-base-url", "-M", "--llm-name", "-m", "--msg":
 				if len(args) < i+2 {
 					return ErrInvalidUsage
 				}
@@ -84,6 +89,14 @@ func (p *Parser) Parse(args []string) error {
 					if err := p.LogLevel.UnmarshalText([]byte(args[i+1])); err != nil {
 						return fmt.Errorf("parse log level: %w", err)
 					}
+				case "-K", "--llm-api-key":
+					p.LLMApiKey = args[i+1]
+				case "-L", "--llm-base-url":
+					p.LLMBaseURL = args[i+1]
+				case "-M", "--llm-name":
+					p.LLMName = args[i+1]
+				case "-m", "--msg":
+					p.Msg = args[i+1]
 				}
 				i++
 			default:
