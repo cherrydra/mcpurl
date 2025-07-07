@@ -200,9 +200,13 @@ func (i *Interactor) executeMain(ctx context.Context, command string, out *os.Fi
 	case "clear", "cls":
 		fmt.Print("\033[H\033[2J")
 		return nil
+	case "env":
+		return i.showEnv(out, args)
 	case "exit", "quit":
 		os.Exit(0)
 		return nil
+	case "export":
+		return i.exportEnv(out, args)
 	case "h", "help":
 		printUsage()
 		return nil
@@ -243,6 +247,28 @@ func (i *Interactor) chdir(args []string) error {
 		dir = args[1]
 	}
 	return os.Chdir(dir)
+}
+
+func (i *Interactor) showEnv(out *os.File, _ []string) error {
+	for _, env := range os.Environ() {
+		fmt.Fprintln(out, env)
+	}
+	return nil
+}
+
+func (i *Interactor) exportEnv(out *os.File, args []string) error {
+	if len(args) < 2 {
+		return i.showEnv(out, args)
+	}
+
+	for _, arg := range args[1:] {
+		parts := strings.SplitN(arg, "=", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		os.Setenv(parts[0], parts[1])
+	}
+	return nil
 }
 
 func (i *Interactor) listDir(out *os.File, args []string) error {
@@ -458,6 +484,7 @@ func printUsage() {
   cat <file>                      Read file
   cd [dir]                        Change working directory
   clear                           Clear the screen
+  export [name=value ...]         Set/get environment variables
   exit                            Exit the interactor
   help                            Show this help message
   ls [dir]                        List files in directory

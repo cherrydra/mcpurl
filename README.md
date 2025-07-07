@@ -61,6 +61,7 @@ Usage:
   cat <file>                      Read file
   cd [dir]                        Change working directory
   clear                           Clear the screen
+  export [name=value ...]         Set/get environment variables
   exit                            Exit the interactor
   help                            Show this help message
   ls [dir]                        List files in directory
