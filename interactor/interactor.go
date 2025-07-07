@@ -323,7 +323,7 @@ func (i *Interactor) callTool(ctx context.Context, f features.ServerFeatures, ar
 	}
 
 	flags := flag.NewFlagSet(args[1], flag.ContinueOnError)
-	arguments := map[string]any{}
+	arguments := map[string]*string{}
 	tools, err := f.ListTools(ctx)
 	if err != nil {
 		return fmt.Errorf("list tools: %w", err)
@@ -355,7 +355,13 @@ func (i *Interactor) callTool(ctx context.Context, f features.ServerFeatures, ar
 		}
 		return fmt.Errorf("parse flags: %w", err)
 	}
-	return f.CallTool1(ctx, args[1], arguments)
+	params := map[string]any{}
+	for k, v := range arguments {
+		if *v != "" {
+			params[k] = v
+		}
+	}
+	return f.CallTool1(ctx, args[1], params)
 }
 
 func (i *Interactor) getPrompt(ctx context.Context, f features.ServerFeatures, args []string) error {
