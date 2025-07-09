@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"strings"
 
 	"github.com/cherrydra/mcpurl/features"
 	"github.com/cherrydra/mcpurl/interactor"
@@ -27,24 +26,24 @@ func main() {
 		return parser.Parse(os.Args[1:])
 	})
 
-	slog.SetLogLoggerLevel(parser.LogLevel)
-	if parser.Silent {
+	slog.SetLogLoggerLevel(parser.Arguments().LogLevel)
+	if parser.Arguments().Silent {
 		slog.SetLogLoggerLevel(slog.LevelError)
 	}
 	slog.Debug("Running in debug mode", "version", version.Short(), "go_version", version.GoVersion)
 
-	if parser.Help {
+	if parser.Arguments().Help {
 		printUsage()
 		return
 	}
 
-	if parser.Version {
+	if parser.Arguments().Version {
 		fmt.Println(version.GoVersion, version.Short())
 		return
 	}
 
 	runE(func() error {
-		return runMain(parser)
+		return runMain(parser.Arguments())
 	})
 }
 
@@ -60,8 +59,8 @@ func runE(run func() error) {
 	}
 }
 
-func runMain(parsed parser.Parser) error {
-	clientTransport, err := transport.Transport(parsed)
+func runMain(args parser.Arguments) error {
+	clientTransport, err := transport.Transport(args)
 	if err != nil && !errors.Is(err, transport.ErrNoTransport) {
 		return fmt.Errorf("transport: %w", err)
 	}
@@ -76,21 +75,21 @@ func runMain(parsed parser.Parser) error {
 	}
 
 	var L *llm.LLM
-	if parsed.LLMBaseURL != "" {
+	if args.LLMBaseURL != "" {
 		client := openai.NewClient(
-			option.WithBaseURL(parsed.LLMBaseURL),
-			option.WithAPIKey(parsed.LLMApiKey),
+			option.WithBaseURL(args.LLMBaseURL),
+			option.WithAPIKey(args.LLMApiKey),
 		)
 		L = &llm.LLM{
 			Client: &client,
-			Model:  parsed.LLMName,
+			Model:  args.LLMName,
 		}
 	}
 
-	if parsed.Interactive {
+	if args.Interactive {
 		return (&interactor.Interactor{
+			Args:    args,
 			Session: session,
-			Server:  strings.Join(parsed.TransportArgs(), " "),
 			LLM:     L,
 		}).Run(ctx)
 	}
@@ -101,29 +100,29 @@ func runMain(parsed parser.Parser) error {
 
 	f := features.ServerFeatures{Session: session}
 
-	if parsed.Tools() {
+	if args.Tools {
 		return f.PrintTools(ctx)
 	}
-	if parsed.Prompts() {
+	if args.Prompts {
 		return f.PrintPrompts(ctx)
 	}
-	if parsed.Resources() {
+	if args.Resources {
 		return f.PrintResources(ctx)
 	}
-	if parsed.Tool() != "" {
-		return f.CallTool(ctx, parsed.Tool(), parsed.Data)
+	if args.Tool != "" {
+		return f.CallTool(ctx, args.Tool, args.Data)
 	}
-	if parsed.Prompt() != "" {
-		return f.GetPrompt(ctx, parsed.Prompt(), parsed.Data)
+	if args.Prompt != "" {
+		return f.GetPrompt(ctx, args.Prompt, args.Data)
 	}
-	if parsed.Resource() != "" {
-		return f.ReadResource(ctx, parsed.Resource())
+	if args.Resource != "" {
+		return f.ReadResource(ctx, args.Resource)
 	}
-	if parsed.Msg != "" {
+	if args.Msg != "" {
 		if L == nil {
 			return llm.ErrDisabled
 		}
-		return L.Msg(ctx, f, parsed.Msg, os.Stdout)
+		return L.Msg(ctx, f, args.Msg, os.Stdout)
 	}
 	return parser.ErrInvalidUsage
 }

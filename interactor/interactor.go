@@ -30,11 +30,12 @@ var (
 )
 
 type Interactor struct {
+	Args    parser.Arguments
 	Session *mcp.ClientSession
-	Server  string
 	LLM     *llm.LLM
 
-	completer *mcpurlCompleter
+	connectedServer string
+	completer       *mcpurlCompleter
 }
 
 func (i *Interactor) Run(ctx context.Context) error {
@@ -459,8 +460,9 @@ func (i *Interactor) connect(ctx context.Context, args []string, out *os.File) e
 	if err := parsed.Parse(args[1:]); err != nil {
 		return fmt.Errorf("parse transport args: %w", err)
 	}
-	parsed.Silent = true
-	clientTransport, err := transport.Transport(parsed)
+	parsedArgs := parsed.Arguments()
+	parsedArgs.Silent = true
+	clientTransport, err := transport.Transport(parsedArgs)
 	if err != nil {
 		return fmt.Errorf("transport: %w", err)
 	}
@@ -474,7 +476,7 @@ func (i *Interactor) connect(ctx context.Context, args []string, out *os.File) e
 		i.Session.Close()
 	}
 	i.Session = session
-	i.Server = strings.Join(parsed.TransportArgs(), " ")
+	i.connectedServer = strings.Join(parsedArgs.TransportArgs, " ")
 	i.completer.s.Session = session
 	return i.showStatus(ctx, out)
 }
@@ -486,7 +488,7 @@ func (i *Interactor) disconnect(ctx context.Context, out *os.File) error {
 	json.NewEncoder(out).Encode(map[string]string{"msg": "disconnecting"})
 	i.Session.Close()
 	i.Session = nil
-	i.Server = ""
+	i.connectedServer = ""
 	return i.showStatus(ctx, out)
 }
 
@@ -501,8 +503,11 @@ func (i *Interactor) showStatus(ctx context.Context, out *os.File) error {
 		if err := i.Session.Ping(ctx, nil); err != nil {
 			status = "unhealth"
 		}
+		if i.connectedServer == "" {
+			i.connectedServer = strings.Join(i.Args.TransportArgs, " ")
+		}
 	}
-	s := map[string]string{"server": i.Server, "status": status}
+	s := map[string]string{"server": i.connectedServer, "status": status}
 	json.NewEncoder(out).Encode(s)
 	return nil
 }
