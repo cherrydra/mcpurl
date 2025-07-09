@@ -334,6 +334,19 @@ func (i *Interactor) printPwd(out *os.File) error {
 	return nil
 }
 
+type lastByteDetector struct {
+	lastByte byte
+}
+
+func (d *lastByteDetector) Write(p []byte) (n int, err error) {
+	if len(p) == 0 {
+		return
+	}
+	n = len(p)
+	d.lastByte = p[n-1]
+	return
+}
+
 func (i *Interactor) readFile(out *os.File, args []string) error {
 	if len(args) < 2 {
 		return parser.ErrInvalidUsage
@@ -343,8 +356,12 @@ func (i *Interactor) readFile(out *os.File, args []string) error {
 		return fmt.Errorf("open file %s: %w", args[1], err)
 	}
 	defer file.Close()
-	if _, err := io.Copy(out, file); err != nil {
+	detector := &lastByteDetector{}
+	if _, err := io.Copy(io.MultiWriter(out, detector), file); err != nil {
 		return fmt.Errorf("read file %s: %w", args[1], err)
+	}
+	if detector.lastByte != '\n' {
+		fmt.Fprintln(out, "\033[31m#\033[0m")
 	}
 	return nil
 }
@@ -353,7 +370,16 @@ func (i *Interactor) callTool(ctx context.Context, f features.ServerFeatures, ar
 	if len(args) < 2 {
 		return parser.ErrInvalidUsage
 	}
+	// tool <tool> @data.json
+	if len(args) >= 3 && strings.HasPrefix(args[2], "@") {
+		data, err := parser.Parser{}.ParseData(args[2])
+		if err != nil {
+			return fmt.Errorf("parse tool arguments: %w", err)
+		}
+		return f.CallTool(ctx, args[1], data)
+	}
 
+	// tool <tool> [options]
 	flags := flag.NewFlagSet(args[1], flag.ContinueOnError)
 	arguments := map[string]*string{}
 	tools, err := f.ListTools(ctx)
@@ -401,6 +427,16 @@ func (i *Interactor) getPrompt(ctx context.Context, f features.ServerFeatures, a
 		return parser.ErrInvalidUsage
 	}
 
+	// prompt <prompt> @data.json
+	if len(args) >= 3 && strings.HasPrefix(args[2], "@") {
+		data, err := parser.Parser{}.ParseData(args[2])
+		if err != nil {
+			return fmt.Errorf("parse prompt arguments: %w", err)
+		}
+		return f.GetPrompt(ctx, args[1], data)
+	}
+
+	// prompt <prompt> [options]
 	flags := flag.NewFlagSet(args[1], flag.ContinueOnError)
 	arguments := map[string]*string{}
 

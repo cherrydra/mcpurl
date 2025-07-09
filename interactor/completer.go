@@ -31,11 +31,11 @@ func (c *mcpurlCompleter) Do(line []rune, pos int) (newLine [][]rune, length int
 			readline.PcItem("resources"),
 			readline.PcItem("tool", readline.PcItemDynamic(
 				c.listTools,
-				readline.PcItemDynamic(searchFiles)),
+				readline.PcItemDynamic(func(s string) []string { return searchFiles(s, "@", FILE_SEARCH_MODE_ONLY_FILES) })),
 			),
 			readline.PcItem("prompt", readline.PcItemDynamic(
 				c.listPrompts,
-				readline.PcItemDynamic(searchFiles)),
+				readline.PcItemDynamic(func(s string) []string { return searchFiles(s, "@", FILE_SEARCH_MODE_ONLY_FILES) })),
 			),
 			readline.PcItem("resource", readline.PcItemDynamic(
 				c.listResources),
@@ -45,14 +45,14 @@ func (c *mcpurlCompleter) Do(line []rune, pos int) (newLine [][]rune, length int
 			readline.PcItem("connect"),
 			readline.PcItem("disconnect"),
 			readline.PcItem("status"),
-			readline.PcItem("cat"),
-			readline.PcItem("cd"),
+			readline.PcItem("cat", readline.PcItemDynamic(func(s string) []string { return searchFiles(s, "", FILE_SEARCH_MODE_ONLY_FILES) })),
+			readline.PcItem("cd", readline.PcItemDynamic(func(s string) []string { return searchFiles(s, "", FILE_SEARCH_MODE_ONLY_DIRS) })),
 			readline.PcItem("clear"),
 			readline.PcItem("exit"),
 			readline.PcItem("export"),
 			readline.PcItem("env"),
 			readline.PcItem("help"),
-			readline.PcItem("ls"),
+			readline.PcItem("ls", readline.PcItemDynamic(func(s string) []string { return searchFiles(s, "", FILE_SEARCH_MODE_ONLY_DIRS) })),
 			readline.PcItem("pwd"),
 			readline.PcItem("version"),
 		)
@@ -105,9 +105,23 @@ func (c *mcpurlCompleter) listResources(prefix string) (ret []string) {
 	return
 }
 
-func searchFiles(s string) (ret []string) {
-	args, _ := shlex.Split(s)
-	if len(args) <= 2 || !strings.HasPrefix(args[2], "@") {
+var (
+	FILE_SEARCH_MODE_ONLY_FILES int8 = 0
+	FILE_SEARCH_MODE_ONLY_DIRS  int8 = 1
+	FILE_SEARCH_MODE_BOTH       int8 = 2
+)
+
+func searchFiles(s, prefix string, mode int8) (ret []string) {
+	var lastArg string
+	if !strings.HasSuffix(s, " ") {
+		args, _ := shlex.Split(s)
+		if len(args) < 2 {
+			return nil
+		}
+		lastArg = args[len(args)-1]
+	}
+
+	if !strings.HasPrefix(lastArg, prefix) {
 		return nil
 	}
 
@@ -116,10 +130,18 @@ func searchFiles(s string) (ret []string) {
 		return nil
 	}
 	for _, file := range files {
-		if file.IsDir() {
-			continue
+		switch mode {
+		case 0: // only files
+			if file.IsDir() {
+				continue
+			}
+		case 1: // only directories
+			if !file.IsDir() {
+				continue
+			}
+		default:
 		}
-		ret = append(ret, "@"+file.Name())
+		ret = append(ret, prefix+file.Name())
 	}
 	return
 }
