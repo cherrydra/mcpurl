@@ -78,6 +78,7 @@ func (i *LLM) Msg(ctx context.Context, f features.ServerFeatures, message string
 		if len(acc.Choices) > 0 {
 			fmt.Fprintln(out)
 		}
+		i.messagesContext = append(params.Messages, acc.Choices[0].Message.ToParam())
 		return nil
 	}
 
@@ -103,7 +104,7 @@ func (i *LLM) Msg(ctx context.Context, f features.ServerFeatures, message string
 		fmt.Fprint(out, chunk.Choices[0].Delta.Content)
 	}
 	fmt.Fprintln(out)
-	i.messagesContext = params.Messages
+	i.messagesContext = append(params.Messages, acc.Choices[0].Message.ToParam())
 	return nil
 }
 
