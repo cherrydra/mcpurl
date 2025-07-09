@@ -16,8 +16,8 @@ var (
 )
 
 type mcpurlCompleter struct {
-	ctx context.Context
-	s   *features.ServerFeatures
+	ctx     context.Context
+	session func() *features.ServerFeatures
 
 	once      sync.Once
 	completer *readline.PrefixCompleter
@@ -37,22 +37,26 @@ func (c *mcpurlCompleter) Do(line []rune, pos int) (newLine [][]rune, length int
 				c.listPrompts,
 				readline.PcItemDynamic(func(s string) []string { return searchFiles(s, "@", FILE_SEARCH_MODE_ONLY_FILES) })),
 			),
-			readline.PcItem("resource", readline.PcItemDynamic(
-				c.listResources),
-			),
+			readline.PcItem("resource", readline.PcItemDynamic(c.listResources)),
 			readline.PcItem("msg"),
 			readline.PcItem("ctx", readline.PcItem("clear")),
 			readline.PcItem("connect"),
 			readline.PcItem("disconnect"),
 			readline.PcItem("status"),
-			readline.PcItem("cat", readline.PcItemDynamic(func(s string) []string { return searchFiles(s, "", FILE_SEARCH_MODE_ONLY_FILES) })),
-			readline.PcItem("cd", readline.PcItemDynamic(func(s string) []string { return searchFiles(s, "", FILE_SEARCH_MODE_ONLY_DIRS) })),
+			readline.PcItem("cat", readline.PcItemDynamic(func(s string) []string {
+				return searchFiles(s, "", FILE_SEARCH_MODE_ONLY_FILES)
+			})),
+			readline.PcItem("cd", readline.PcItemDynamic(func(s string) []string {
+				return searchFiles(s, "", FILE_SEARCH_MODE_ONLY_DIRS)
+			})),
 			readline.PcItem("clear"),
 			readline.PcItem("exit"),
 			readline.PcItem("export"),
 			readline.PcItem("env"),
 			readline.PcItem("help"),
-			readline.PcItem("ls", readline.PcItemDynamic(func(s string) []string { return searchFiles(s, "", FILE_SEARCH_MODE_ONLY_DIRS) })),
+			readline.PcItem("ls", readline.PcItemDynamic(func(s string) []string {
+				return searchFiles(s, "", FILE_SEARCH_MODE_ONLY_DIRS)
+			})),
 			readline.PcItem("pwd"),
 			readline.PcItem("version"),
 		)
@@ -62,7 +66,7 @@ func (c *mcpurlCompleter) Do(line []rune, pos int) (newLine [][]rune, length int
 
 func (c *mcpurlCompleter) listTools(prefix string) (ret []string) {
 	args, _ := shlex.Split(prefix)
-	tools, err := c.s.ListTools(c.ctx)
+	tools, err := c.session().ListTools(c.ctx)
 	if err != nil {
 		return nil
 	}
@@ -77,7 +81,7 @@ func (c *mcpurlCompleter) listTools(prefix string) (ret []string) {
 
 func (c *mcpurlCompleter) listPrompts(prefix string) (ret []string) {
 	args, _ := shlex.Split(prefix)
-	prompts, err := c.s.ListPrompts(c.ctx)
+	prompts, err := c.session().ListPrompts(c.ctx)
 	if err != nil {
 		return nil
 	}
@@ -92,7 +96,7 @@ func (c *mcpurlCompleter) listPrompts(prefix string) (ret []string) {
 
 func (c *mcpurlCompleter) listResources(prefix string) (ret []string) {
 	args, _ := shlex.Split(prefix)
-	resources, err := c.s.ListResources(c.ctx)
+	resources, err := c.session().ListResources(c.ctx)
 	if err != nil {
 		return nil
 	}

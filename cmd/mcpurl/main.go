@@ -10,6 +10,7 @@ import (
 
 	"github.com/cherrydra/mcpurl/features"
 	"github.com/cherrydra/mcpurl/interactor"
+	"github.com/cherrydra/mcpurl/interactor/commands"
 	"github.com/cherrydra/mcpurl/llm"
 	"github.com/cherrydra/mcpurl/parser"
 	"github.com/cherrydra/mcpurl/transport"
@@ -86,43 +87,40 @@ func runMain(args parser.Arguments) error {
 		}
 	}
 
+	commands := &commands.Commands{
+		Args:    args,
+		Session: session,
+		LLM:     L,
+	}
+
 	if args.Interactive {
-		return (&interactor.Interactor{
-			Args:    args,
-			Session: session,
-			LLM:     L,
-		}).Run(ctx)
+		return (&interactor.Interactor{Commands: commands}).Run(ctx)
 	}
 
 	if session == nil {
 		return parser.ErrInvalidUsage
 	}
 
-	f := features.ServerFeatures{Session: session}
-
 	if args.Tools {
-		return f.PrintTools(ctx)
+		return commands.Exec(ctx, "tools", nil, os.Stdin, os.Stdout)
 	}
 	if args.Prompts {
-		return f.PrintPrompts(ctx)
+		return commands.Exec(ctx, "prompts", nil, os.Stdin, os.Stdout)
 	}
 	if args.Resources {
-		return f.PrintResources(ctx)
+		return commands.Exec(ctx, "resources", nil, os.Stdin, os.Stdout)
 	}
 	if args.Tool != "" {
-		return f.CallTool(ctx, args.Tool, args.Data)
+		return (&features.ServerFeatures{Session: commands.Session}).CallTool(ctx, args.Tool, args.Data)
 	}
 	if args.Prompt != "" {
-		return f.GetPrompt(ctx, args.Prompt, args.Data)
+		return (&features.ServerFeatures{Session: commands.Session}).GetPrompt(ctx, args.Prompt, args.Data)
 	}
 	if args.Resource != "" {
-		return f.ReadResource(ctx, args.Resource)
+		return (&features.ServerFeatures{Session: commands.Session}).ReadResource(ctx, args.Resource)
 	}
 	if args.Msg != "" {
-		if L == nil {
-			return llm.ErrDisabled
-		}
-		return L.Msg(ctx, f, args.Msg, os.Stdout)
+		return commands.Exec(ctx, "msg", []string{args.Msg}, os.Stdin, os.Stdout)
 	}
 	return parser.ErrInvalidUsage
 }
