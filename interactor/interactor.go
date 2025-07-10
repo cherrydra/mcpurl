@@ -76,6 +76,9 @@ func (i *Interactor) Run(ctx context.Context) error {
 				_ = i.Commands.PrintUsage()
 				continue
 			}
+			if errors.Is(err, os.ErrProcessDone) {
+				break
+			}
 			fmt.Fprintln(os.Stderr, "Error:", err)
 		}
 	}

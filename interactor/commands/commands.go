@@ -64,6 +64,8 @@ func (c *Commands) Exec(ctx context.Context, command string, args []string, in, 
 		return c.disconnect(ctx, out)
 	case "s", "status":
 		return c.showStatus(ctx, out)
+	case "q", "exit":
+		return os.ErrProcessDone
 	case "h", "help":
 		return c.PrintUsage()
 	case "v", "version":
