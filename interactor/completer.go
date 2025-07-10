@@ -7,8 +7,8 @@ import (
 	"sync"
 
 	"github.com/cherrydra/mcpurl/features"
-	"github.com/chzyer/readline"
 	"github.com/google/shlex"
+	"github.com/mcpurl/readline"
 )
 
 var (
