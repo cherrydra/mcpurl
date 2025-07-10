@@ -34,7 +34,7 @@ func (i *LLM) Msg(ctx context.Context, f features.ServerFeatures, message string
 		return ErrDisabled
 	}
 	tools, err := f.ListTools(ctx)
-	if err != nil {
+	if err != nil && !errors.Is(err, features.ErrNoSession) {
 		return fmt.Errorf("list tools: %w", err)
 	}
 	params := openai.ChatCompletionNewParams{
