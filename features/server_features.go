@@ -15,7 +15,7 @@ type ServerFeatures struct {
 	Out     *os.File
 }
 
-func (s *ServerFeatures) CallTool(ctx context.Context, tool, data string) error {
+func (s ServerFeatures) CallTool(ctx context.Context, tool, data string) error {
 	params := map[string]any{}
 	if data != "" {
 		if err := json.Unmarshal([]byte(data), &params); err != nil {
@@ -25,7 +25,7 @@ func (s *ServerFeatures) CallTool(ctx context.Context, tool, data string) error 
 	return s.CallTool1(ctx, tool, params)
 }
 
-func (s *ServerFeatures) CallTool1(ctx context.Context, tool string, params map[string]any) error {
+func (s ServerFeatures) CallTool1(ctx context.Context, tool string, params map[string]any) error {
 	if s.Session == nil {
 		return ErrNoSession
 	}
@@ -65,7 +65,7 @@ func (s ServerFeatures) CallTool2(ctx context.Context, tool string, arguments st
 	return result.Content[0], nil
 }
 
-func (s *ServerFeatures) GetPrompt(ctx context.Context, prompt, data string) error {
+func (s ServerFeatures) GetPrompt(ctx context.Context, prompt, data string) error {
 	params := map[string]string{}
 	if data != "" {
 		if err := json.Unmarshal([]byte(data), &params); err != nil {
@@ -75,7 +75,7 @@ func (s *ServerFeatures) GetPrompt(ctx context.Context, prompt, data string) err
 	return s.GetPrompt1(ctx, prompt, params)
 }
 
-func (s *ServerFeatures) GetPrompt1(ctx context.Context, prompt string, params map[string]string) error {
+func (s ServerFeatures) GetPrompt1(ctx context.Context, prompt string, params map[string]string) error {
 	if s.Session == nil {
 		return ErrNoSession
 	}
@@ -113,7 +113,7 @@ func (s ServerFeatures) ListPrompts(ctx context.Context) ([]*mcp.Prompt, error) 
 	return prompts, nil
 }
 
-func (s *ServerFeatures) PrintPrompts(ctx context.Context) error {
+func (s ServerFeatures) PrintPrompts(ctx context.Context) error {
 	prompts, err := s.ListPrompts(ctx)
 	if err != nil {
 		return err
@@ -144,7 +144,7 @@ func (s ServerFeatures) ListResources(ctx context.Context) ([]*mcp.Resource, err
 	return resources, nil
 }
 
-func (s *ServerFeatures) PrintResources(ctx context.Context) error {
+func (s ServerFeatures) PrintResources(ctx context.Context) error {
 	resources, err := s.ListResources(ctx)
 	if err != nil {
 		return err
@@ -155,7 +155,7 @@ func (s *ServerFeatures) PrintResources(ctx context.Context) error {
 	return nil
 }
 
-func (s *ServerFeatures) ReadResource(ctx context.Context, resource string) error {
+func (s ServerFeatures) ReadResource(ctx context.Context, resource string) error {
 	if s.Session == nil {
 		return ErrNoSession
 	}
@@ -191,7 +191,7 @@ func (s ServerFeatures) ListTools(ctx context.Context) ([]*mcp.Tool, error) {
 	return tools, nil
 }
 
-func (s *ServerFeatures) PrintTools(ctx context.Context) error {
+func (s ServerFeatures) PrintTools(ctx context.Context) error {
 	tools, err := s.ListTools(ctx)
 	if err != nil {
 		return err
