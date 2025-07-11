@@ -20,6 +20,12 @@ import (
 )
 
 var (
+	MCPImplementation = &mcp.Implementation{
+		Name:    "mcpurl",
+		Title:   "Command Line General AI Agent",
+		Version: version.Short(),
+	}
+
 	registry = map[string]func(ctx context.Context, args types.Arguments) error{}
 )
 
@@ -113,7 +119,7 @@ func (i *Commands) connect(ctx context.Context, args []string, out *os.File) err
 	if err != nil {
 		return fmt.Errorf("transport: %w", err)
 	}
-	client := mcp.NewClient("mcpcurl", version.Short(), nil)
+	client := mcp.NewClient(MCPImplementation, nil)
 	session, err := client.Connect(ctx, clientTransport)
 	if err != nil {
 		return fmt.Errorf("connect mcp server: %w", err)

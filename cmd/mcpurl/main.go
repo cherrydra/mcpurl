@@ -68,7 +68,7 @@ func runMain(args parser.Arguments) error {
 	ctx := context.Background()
 	var session *mcp.ClientSession
 	if err == nil {
-		client := mcp.NewClient("mcpcurl", version.Short(), nil)
+		client := mcp.NewClient(commands.MCPImplementation, nil)
 		if session, err = client.Connect(ctx, clientTransport); err != nil {
 			return fmt.Errorf("connect mcp server: %w", err)
 		}
