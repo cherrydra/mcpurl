@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"os"
-	"path/filepath"
 	"strings"
 	"sync"
 
@@ -32,6 +32,18 @@ func (i *Interactor) Run(ctx context.Context) error {
 		return fmt.Errorf("commands is nil")
 	}
 
+	// restore llm contexts if running in interactive mode
+	if i.Commands.LLM != nil {
+		if err := i.Commands.LLM.ContextManger.LoadOnce(i.Commands.Args.LLMContextFile); err != nil {
+			return fmt.Errorf("load llm contexts: %w", err)
+		}
+		defer func() {
+			if err := i.Commands.LLM.ContextManger.Save(i.Commands.Args.LLMContextFile); err != nil {
+				slog.Warn("save llm contexts", "error", err)
+			}
+		}()
+	}
+
 	i.completer = &mcpurlCompleter{
 		ctx:     ctx,
 		session: func() *features.ServerFeatures { return &features.ServerFeatures{Session: i.Commands.Session} },
@@ -43,7 +55,7 @@ func (i *Interactor) Run(ctx context.Context) error {
 		InterruptPrompt: "^C",
 		EOFPrompt:       "exit",
 
-		HistoryFile:         historyFile(),
+		HistoryFile:         i.Commands.Args.HistoryFile,
 		HistorySearchFold:   true,
 		FuncFilterInputRune: filterInput,
 	})
@@ -169,12 +181,4 @@ func filterInput(r rune) (rune, bool) {
 		return r, false
 	}
 	return r, true
-}
-
-func historyFile() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return ""
-	}
-	return filepath.Join(home, ".mcpurl_history")
 }

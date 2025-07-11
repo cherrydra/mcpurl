@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -35,6 +36,9 @@ type Arguments struct {
 	Tool        string
 	Tools       bool
 	Version     bool
+
+	HistoryFile    string
+	LLMContextFile string
 }
 
 type Parser struct {
@@ -170,6 +174,16 @@ func (p *Parser) applyFromEnv() error {
 			return fmt.Errorf("parse log level: %w", err)
 		}
 	}
+	if v := os.Getenv("MCPURL_HISTORY_FILE"); v != "" {
+		p.args.HistoryFile = v
+	} else {
+		p.args.HistoryFile = historyFile()
+	}
+	if v := os.Getenv("MCPURL_LLM_CONTEXT_FILE"); v != "" {
+		p.args.LLMContextFile = v
+	} else {
+		p.args.LLMContextFile = llmContextFile()
+	}
 	return nil
 }
 
@@ -178,4 +192,20 @@ func (p Parser) checkArgs() error {
 		return fmt.Errorf("model name is required when LLM base url is set")
 	}
 	return nil
+}
+
+func historyFile() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, ".mcpurl_history")
+}
+
+func llmContextFile() string {
+	home, err := os.UserHomeDir()
+	if err != nil {
+		return ""
+	}
+	return filepath.Join(home, ".mcpurl_llm_contexts")
 }

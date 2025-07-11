@@ -34,21 +34,6 @@ func Msg(ctx context.Context, args types.Arguments) error {
 	return args.LLM.Msg(ctx, args.Features, string(b), args.Out)
 }
 
-func ModelContext(_ context.Context, args types.Arguments) error {
-	if args.LLM == nil {
-		return llm.ErrDisabled
-	}
-	if len(args.Args) == 0 {
-		return parser.ErrInvalidUsage
-	}
-	switch args.Args[0] {
-	case "clear":
-		args.LLM.ClearContext()
-		return nil
-	}
-	return parser.ErrInvalidUsage
-}
-
 func CallTool(ctx context.Context, args types.Arguments) error {
 	if len(args.Args) == 0 {
 		return parser.ErrInvalidUsage

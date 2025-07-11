@@ -9,7 +9,6 @@ import (
 	"io"
 	"log/slog"
 	"os"
-	"sync"
 
 	"github.com/cherrydra/mcpurl/features"
 	"github.com/openai/openai-go"
@@ -23,13 +22,10 @@ type LLM struct {
 	Client *openai.Client
 	Model  string
 
-	messagesContextMutex sync.RWMutex
-	messagesContext      []openai.ChatCompletionMessageParamUnion
+	ContextManger TalkContextManager
 }
 
 func (i *LLM) Msg(ctx context.Context, f features.ServerFeatures, message string, out *os.File) error {
-	i.messagesContextMutex.Lock()
-	defer i.messagesContextMutex.Unlock()
 	if i.Client == nil {
 		return ErrDisabled
 	}
@@ -38,7 +34,7 @@ func (i *LLM) Msg(ctx context.Context, f features.ServerFeatures, message string
 		return fmt.Errorf("list tools: %w", err)
 	}
 	params := openai.ChatCompletionNewParams{
-		Messages: append(i.messagesContext, openai.UserMessage(message)),
+		Messages: i.ContextManger.addMsg(openai.UserMessage(message)).Messages,
 		Model:    i.Model,
 	}
 
@@ -79,12 +75,12 @@ func (i *LLM) Msg(ctx context.Context, f features.ServerFeatures, message string
 		if detector.TotalBytes() > 0 && detector.LastByte() != '\n' {
 			fmt.Fprintln(out)
 		}
+		params.Messages = append(params.Messages, acc.Choices[0].Message.ToParam())
 		switch acc.Choices[0].FinishReason {
 		case "tool_calls":
 			if len(acc.Choices[0].Message.ToolCalls) == 0 {
 				return errors.New("no tool calls in response, but finish reason is tool_calls")
 			}
-			params.Messages = append(params.Messages, acc.Choices[0].Message.ToParam())
 			for _, toolCall := range acc.Choices[0].Message.ToolCalls {
 				slog.Info("Calling tool", "name", toolCall.Function.Name, "arguments", toolCall.Function.Arguments)
 				result, err := f.CallTool2(ctx, toolCall.Function.Name, toolCall.Function.Arguments)
@@ -97,7 +93,7 @@ func (i *LLM) Msg(ctx context.Context, f features.ServerFeatures, message string
 			}
 		case "stop":
 			fmt.Fprintln(out)
-			i.messagesContext = append(i.messagesContext, acc.Choices[0].Message.ToParam())
+			i.ContextManger.setMsgs(params.Messages)
 			return nil
 		case "length":
 			return errors.New("response too long for model")
@@ -105,12 +101,6 @@ func (i *LLM) Msg(ctx context.Context, f features.ServerFeatures, message string
 			return fmt.Errorf("unexpected finish reason: %s", acc.Choices[0].FinishReason)
 		}
 	}
-}
-
-func (i *LLM) ClearContext() {
-	i.messagesContextMutex.Lock()
-	defer i.messagesContextMutex.Unlock()
-	i.messagesContext = []openai.ChatCompletionMessageParamUnion{}
 }
 
 type LastByteDetector struct {
