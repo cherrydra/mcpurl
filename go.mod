@@ -2,7 +2,7 @@ module github.com/cherrydra/mcpurl
 
 go 1.24
 
-toolchain go1.24.4
+toolchain go1.24.5
 
 require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
