@@ -8,8 +8,8 @@ github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 h1:El6M4kTTCOh6aBiKaU
 github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510/go.mod h1:pupxD2MaaD3pAXIBCelhxNneeOaAeabZDe5s4K6zSpQ=
 github.com/mattn/go-runewidth v0.0.16 h1:E5ScNMtiwvlvB5paMFdw9p4kSQzbXFikJ5SQO6TULQc=
 github.com/mattn/go-runewidth v0.0.16/go.mod h1:Jdepj2loyihRzMpdS35Xk/zdY8IAYHsh153qUoGf23w=
-github.com/mcpurl/readline v0.0.0-20250710134446-e157ebbe57ed h1:GbyqaqvROmQhmeEozxJ9dNd++P3ZWPbbyBcylYG79kY=
-github.com/mcpurl/readline v0.0.0-20250710134446-e157ebbe57ed/go.mod h1:UZe185cBe1+o59sPrS8ZJthXpJanYPZ8IJJbZy4kPqs=
+github.com/mcpurl/readline v0.0.0-20250710153316-898675b77c88 h1:6q6JTSmKfAONq5FY/vI5MgkcC1AXvZgq5u4YzgVL8Mc=
+github.com/mcpurl/readline v0.0.0-20250710153316-898675b77c88/go.mod h1:UZe185cBe1+o59sPrS8ZJthXpJanYPZ8IJJbZy4kPqs=
 github.com/modelcontextprotocol/go-sdk v0.1.0 h1:ItzbFWYNt4EHcUrScX7P8JPASn1FVYb29G773Xkl+IU=
 github.com/modelcontextprotocol/go-sdk v0.1.0/go.mod h1:DcXfbr7yl7e35oMpzHfKw2nUYRjhIGS2uou/6tdsTB0=
 github.com/openai/openai-go v1.8.2 h1:UqSkJ1vCOPUpz9Ka5tS0324EJFEuOvMc+lA/EarJWP8=

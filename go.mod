@@ -6,7 +6,7 @@ toolchain go1.24.4
 
 require (
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510
-	github.com/mcpurl/readline v0.0.0-20250710134446-e157ebbe57ed
+	github.com/mcpurl/readline v0.0.0-20250710153316-898675b77c88
 	github.com/modelcontextprotocol/go-sdk v0.1.0
 	github.com/openai/openai-go v1.8.2
 )
