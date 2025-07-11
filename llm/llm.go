@@ -39,7 +39,6 @@ func (i *LLM) Msg(ctx context.Context, f features.ServerFeatures, message string
 	}
 	params := openai.ChatCompletionNewParams{
 		Messages: append(i.messagesContext, openai.UserMessage(message)),
-		Tools:    []openai.ChatCompletionToolParam{},
 		Model:    i.Model,
 	}
 
@@ -75,7 +74,7 @@ func (i *LLM) Msg(ctx context.Context, f features.ServerFeatures, message string
 			fmt.Fprint(io.MultiWriter(out, detector), chunk.Choices[0].Delta.Content)
 		}
 		if len(acc.Choices) == 0 {
-			return fmt.Errorf("no response from llm")
+			return fmt.Errorf("no response from llm: %w", stream.Err())
 		}
 		if detector.TotalBytes() > 0 && detector.LastByte() != '\n' {
 			fmt.Fprintln(out)
