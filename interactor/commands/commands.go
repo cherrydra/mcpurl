@@ -8,24 +8,19 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/cherrydra/mcpurl/features"
 	"github.com/cherrydra/mcpurl/interactor/commands/internal/ai"
 	"github.com/cherrydra/mcpurl/interactor/commands/internal/system"
 	"github.com/cherrydra/mcpurl/interactor/commands/internal/types"
 	"github.com/cherrydra/mcpurl/llm"
+	"github.com/cherrydra/mcpurl/mcp/client"
+	"github.com/cherrydra/mcpurl/mcp/features"
+	"github.com/cherrydra/mcpurl/mcp/transport"
 	"github.com/cherrydra/mcpurl/parser"
-	"github.com/cherrydra/mcpurl/transport"
 	"github.com/cherrydra/mcpurl/version"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 var (
-	MCPImplementation = &mcp.Implementation{
-		Name:    "mcpurl",
-		Title:   "Command Line General AI Agent",
-		Version: version.Short(),
-	}
-
 	registry = map[string]func(ctx context.Context, args types.Arguments) error{}
 )
 
@@ -119,7 +114,7 @@ func (i *Commands) connect(ctx context.Context, args []string, out *os.File) err
 	if err != nil {
 		return fmt.Errorf("transport: %w", err)
 	}
-	client := mcp.NewClient(MCPImplementation, nil)
+	client := mcp.NewClient(client.Implementation, nil)
 	session, err := client.Connect(ctx, clientTransport)
 	if err != nil {
 		return fmt.Errorf("connect mcp server: %w", err)

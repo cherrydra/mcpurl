@@ -8,12 +8,13 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/cherrydra/mcpurl/features"
 	"github.com/cherrydra/mcpurl/interactor"
 	"github.com/cherrydra/mcpurl/interactor/commands"
 	"github.com/cherrydra/mcpurl/llm"
+	"github.com/cherrydra/mcpurl/mcp/client"
+	"github.com/cherrydra/mcpurl/mcp/features"
+	"github.com/cherrydra/mcpurl/mcp/transport"
 	"github.com/cherrydra/mcpurl/parser"
-	"github.com/cherrydra/mcpurl/transport"
 	"github.com/cherrydra/mcpurl/version"
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/openai/openai-go"
@@ -68,7 +69,7 @@ func runMain(args parser.Arguments) error {
 	ctx := context.Background()
 	var session *mcp.ClientSession
 	if err == nil {
-		client := mcp.NewClient(commands.MCPImplementation, nil)
+		client := mcp.NewClient(client.Implementation, nil)
 		if session, err = client.Connect(ctx, clientTransport); err != nil {
 			return fmt.Errorf("connect mcp server: %w", err)
 		}

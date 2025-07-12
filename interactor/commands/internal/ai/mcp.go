@@ -6,33 +6,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 	"slices"
 	"strings"
 
 	"github.com/cherrydra/mcpurl/interactor/commands/internal/types"
-	"github.com/cherrydra/mcpurl/llm"
 	"github.com/cherrydra/mcpurl/parser"
 )
-
-func Msg(ctx context.Context, args types.Arguments) error {
-	if len(args.Args) == 0 {
-		return parser.ErrInvalidUsage
-	}
-	if args.LLM == nil {
-		return llm.ErrDisabled
-	}
-	msg := args.Args[0]
-	if msg != "-" {
-		return args.LLM.Msg(ctx, args.Features, msg, args.Out)
-	}
-	b, err := io.ReadAll(args.In)
-	if err != nil {
-		return fmt.Errorf("read message from stdin: %w", err)
-	}
-	return args.LLM.Msg(ctx, args.Features, string(b), args.Out)
-}
 
 func CallTool(ctx context.Context, args types.Arguments) error {
 	if len(args.Args) == 0 {

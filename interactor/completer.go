@@ -6,7 +6,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cherrydra/mcpurl/features"
+	"github.com/cherrydra/mcpurl/mcp/features"
 	"github.com/google/shlex"
 	"github.com/mcpurl/readline"
 )

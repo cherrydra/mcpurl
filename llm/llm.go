@@ -10,7 +10,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/cherrydra/mcpurl/features"
+	"github.com/cherrydra/mcpurl/mcp/features"
 	"github.com/openai/openai-go"
 )
 

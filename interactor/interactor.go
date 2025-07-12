@@ -10,8 +10,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/cherrydra/mcpurl/features"
 	"github.com/cherrydra/mcpurl/interactor/commands"
+	"github.com/cherrydra/mcpurl/mcp/features"
 	"github.com/cherrydra/mcpurl/parser"
 	"github.com/google/shlex"
 	"github.com/mcpurl/readline"
