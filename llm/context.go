@@ -25,6 +25,11 @@ type TalkContext struct {
 	Messages []openai.ChatCompletionMessageParamUnion `json:"messages"`
 }
 
+// IsEmpty checks if the TalkContext has no messages.
+func (t *TalkContext) IsEmpty() bool {
+	return len(t.Messages) == 0
+}
+
 // TalkContextManager manages multiple TalkContexts.
 type TalkContextManager struct {
 	mu       sync.RWMutex

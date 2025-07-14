@@ -34,9 +34,17 @@ func (i *Interactor) Run(ctx context.Context) error {
 
 	// restore llm contexts if running in interactive mode
 	if i.Commands.LLM != nil {
+		// load llm contexts from file
 		if err := i.Commands.LLM.ContextManger.LoadOnce(i.Commands.Args.LLMContextFile); err != nil {
 			return fmt.Errorf("load llm contexts: %w", err)
 		}
+
+		// new interactor session new context
+		if !i.Commands.LLM.ContextManger.Current().IsEmpty() {
+			i.Commands.LLM.ContextManger.New()
+		}
+
+		// save llm contexts on exit
 		defer func() {
 			if err := i.Commands.LLM.ContextManger.Save(i.Commands.Args.LLMContextFile); err != nil {
 				slog.Warn("save llm contexts", "error", err)
