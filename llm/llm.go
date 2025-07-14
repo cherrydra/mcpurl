@@ -69,11 +69,17 @@ func (i *LLM) Msg(ctx context.Context, f features.ServerFeatures, message string
 			acc.AddChunk(chunk)
 			fmt.Fprint(io.MultiWriter(out, detector), chunk.Choices[0].Delta.Content)
 		}
-		if len(acc.Choices) == 0 {
-			return fmt.Errorf("no response from llm: %w", stream.Err())
-		}
 		if detector.TotalBytes() > 0 && detector.LastByte() != '\n' {
 			fmt.Fprintln(out)
+		}
+		if stream.Err() != nil {
+			if errors.Is(stream.Err(), context.Canceled) {
+				return context.Canceled
+			}
+			return fmt.Errorf("streaming error: %w", stream.Err())
+		}
+		if len(acc.Choices) == 0 {
+			return errors.New("no choices in response")
 		}
 		params.Messages = append(params.Messages, acc.Choices[0].Message.ToParam())
 		switch acc.Choices[0].FinishReason {

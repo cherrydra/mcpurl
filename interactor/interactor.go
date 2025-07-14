@@ -73,8 +73,19 @@ func (i *Interactor) Run(ctx context.Context) error {
 
 	defer l.Close()
 	defer i.Commands.Close()
-	l.CaptureExitSignal()
 
+	var executionCtx context.Context
+	var executionCancel context.CancelFunc
+
+	readline.CaptureExitSignal(func() {
+		if executionCancel != nil {
+			executionCancel()
+			return
+		}
+		l.Close()
+	})
+
+readLoop:
 	for {
 		line, err := l.Readline()
 		if err == io.EOF {
@@ -91,14 +102,18 @@ func (i *Interactor) Run(ctx context.Context) error {
 		if command == "" {
 			continue
 		}
-		if err := i.executeCommand(ctx, command); err != nil {
-			if errors.Is(err, parser.ErrInvalidUsage) {
-				_ = i.Commands.PrintUsage()
-				continue
-			}
-			if errors.Is(err, os.ErrProcessDone) {
-				break
-			}
+
+		executionCtx, executionCancel = context.WithCancel(ctx)
+		err = i.executeCommand(executionCtx, command)
+		executionCancel()
+		executionCancel = nil
+		switch err {
+		case parser.ErrInvalidUsage:
+			_ = i.Commands.PrintUsage()
+		case nil, context.Canceled: // just ignore
+		case os.ErrProcessDone:
+			break readLoop
+		default:
 			fmt.Fprintln(os.Stderr, "Error:", err)
 		}
 	}
