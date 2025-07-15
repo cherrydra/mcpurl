@@ -7,9 +7,9 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"log/slog"
 	"os"
 
+	"github.com/cherrydra/mcpurl/interactor/spinner"
 	"github.com/cherrydra/mcpurl/mcp/features"
 	"github.com/openai/openai-go"
 )
@@ -29,7 +29,10 @@ func (i *LLM) Msg(ctx context.Context, f features.ServerFeatures, message string
 	if i.Client == nil {
 		return ErrDisabled
 	}
+
+	s := spinner.Spin(ctx, "", out, false)
 	tools, err := f.ListTools(ctx)
+	s.Stop()
 	if err != nil && !errors.Is(err, features.ErrNoSession) {
 		return fmt.Errorf("list tools: %w", err)
 	}
@@ -58,17 +61,24 @@ func (i *LLM) Msg(ctx context.Context, f features.ServerFeatures, message string
 	}
 
 	for {
+		s := spinner.Spin(ctx, "", out, false)
 		stream := i.Client.Chat.Completions.NewStreaming(ctx, params)
 		acc := openai.ChatCompletionAccumulator{}
 		detector := &LastByteDetector{}
 		for stream.Next() {
 			if stream.Err() != nil {
+				s.Stop()
 				return fmt.Errorf("streaming error: %w", stream.Err())
 			}
 			chunk := stream.Current()
 			acc.AddChunk(chunk)
+			if chunk.Choices[0].Delta.Content != "" {
+				s.Stop()
+			}
 			fmt.Fprint(io.MultiWriter(out, detector), chunk.Choices[0].Delta.Content)
 		}
+		s.Stop()
+
 		if detector.TotalBytes() > 0 && detector.LastByte() != '\n' {
 			fmt.Fprintln(out)
 		}
@@ -88,17 +98,16 @@ func (i *LLM) Msg(ctx context.Context, f features.ServerFeatures, message string
 				return errors.New("no tool calls in response, but finish reason is tool_calls")
 			}
 			for _, toolCall := range acc.Choices[0].Message.ToolCalls {
-				slog.Info("Calling tool", "name", toolCall.Function.Name, "arguments", toolCall.Function.Arguments)
+				s := spinner.Spin(ctx, fmt.Sprintf("\033[90m%s\033[0m\n", toolCall.Function.Name), out, true)
 				result, err := f.CallTool2(ctx, toolCall.Function.Name, toolCall.Function.Arguments)
+				s.Stop()
 				if err != nil {
 					return fmt.Errorf("call tool %s: %w", toolCall.Function.Name, err)
 				}
 				c, _ := result.MarshalJSON()
-				slog.Info("Tool result", "name", toolCall.Function.Name, "result", string(c))
 				params.Messages = append(params.Messages, openai.ToolMessage(string(c), toolCall.ID))
 			}
 		case "stop":
-			fmt.Fprintln(out)
 			i.ContextManger.setMsgs(params.Messages)
 			return nil
 		case "length":
