@@ -46,6 +46,7 @@ func (c *mcpurlCompleter) Do(line []rune, pos int) (newLine [][]rune, length int
 				readline.PcItem("ls"),
 				readline.PcItem("new"),
 				readline.PcItem("use"),
+				readline.PcItem("pop"),
 			),
 			readline.PcItem("connect"),
 			readline.PcItem("disconnect"),

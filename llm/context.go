@@ -39,6 +39,17 @@ type TalkContextManager struct {
 	restoreOnce sync.Once
 }
 
+// Pop removes the last message from the current TalkContext.
+func (m *TalkContextManager) Pop() (*openai.ChatCompletionMessageParamUnion, error) {
+	cur := m.Current()
+	if len(cur.Messages) == 0 {
+		return nil, errors.New("no messages to pop")
+	}
+	last := cur.Messages[len(cur.Messages)-1]
+	cur.Messages = cur.Messages[:len(cur.Messages)-1]
+	return &last, nil
+}
+
 // addMsg adds a message to the current TalkContext, creating it if necessary.
 func (m *TalkContextManager) addMsg(msg openai.ChatCompletionMessageParamUnion) *TalkContext {
 	m.mu.Lock()

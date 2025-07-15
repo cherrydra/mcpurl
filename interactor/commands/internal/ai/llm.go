@@ -2,6 +2,7 @@ package ai
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"strconv"
@@ -45,18 +46,21 @@ func ModelContext(_ context.Context, args types.Arguments) error {
 	}
 
 	switch args.Args[0] {
+	case "pop":
+		msg, err := args.LLM.ContextManger.Pop()
+		if err != nil {
+			return err
+		}
+		_ = json.NewEncoder(args.Out).Encode(msg)
 	case "clear":
 		args.LLM.ContextManger.Clear()
-		return nil
 	case "dump":
 		for _, msg := range args.LLM.ContextManger.Current().Messages {
 			b, _ := msg.MarshalJSON()
 			fmt.Fprintln(args.Out, string(b))
 		}
-		return nil
 	case "new":
 		args.LLM.ContextManger.New()
-		return nil
 	case "del", "delete":
 		if len(args.Args) < 2 {
 			return parser.ErrInvalidUsage
@@ -80,7 +84,6 @@ func ModelContext(_ context.Context, args types.Arguments) error {
 			}
 			fmt.Fprintf(args.Out, " %d: %s\n", ctx.Index, ctx.Title)
 		}
-		return nil
 	case "switch", "use":
 		if len(args.Args) < 2 {
 			return parser.ErrInvalidUsage
@@ -90,6 +93,8 @@ func ModelContext(_ context.Context, args types.Arguments) error {
 			return fmt.Errorf("parse context index: %w", err)
 		}
 		return args.LLM.ContextManger.SwitchTo(int(index))
+	default:
+		return parser.ErrInvalidUsage
 	}
-	return parser.ErrInvalidUsage
+	return nil
 }
