@@ -200,7 +200,7 @@ func (ia *Interactor) executeCommand(ctx context.Context, command string) (err e
 func filterInput(r rune) (rune, bool) {
 	switch r {
 	// block CtrlZ feature
-	case readline.CharCtrlZ:
+	case 0, readline.CharCtrlZ:
 		return r, false
 	}
 	return r, true
