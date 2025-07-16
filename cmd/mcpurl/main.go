@@ -151,7 +151,7 @@ Accepted <options>:
 
 Accepted <mcp_server> formats:
   https://example.com/mcp [options]
-  stdio:///path/to/mcpserver [args] (or simply /path/to/mcpserver [args])
+  stdio:///path/to/mcpserver [args]
 
 Currently supported transports:
   http(s) (streamable http)
