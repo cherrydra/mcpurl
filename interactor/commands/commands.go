@@ -58,6 +58,9 @@ type Commands struct {
 }
 
 func (c *Commands) Exec(ctx context.Context, command string, args []string, in, out *os.File) error {
+	for i, arg := range args {
+		args[i] = os.ExpandEnv(arg)
+	}
 	switch command {
 	case "c", "connect":
 		return c.connect(ctx, args, out)
