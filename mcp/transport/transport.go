@@ -36,17 +36,17 @@ func Transport(args parser.Arguments) (mcp.Transport, error) {
 		return mcp.NewCommandTransport(command), nil
 	case "http", "https":
 		return mcp.NewStreamableClientTransport(transportURL.String(), &mcp.StreamableClientTransportOptions{
-			HTTPClient: &http.Client{Transport: &mcpurlRoundTripper{headers: args.Headers}},
+			HTTPClient: &http.Client{Transport: &AddHeadersRoundTripper{Headers: args.Headers}},
 		}), nil
 	case "":
 		switch filepath.Base(transportURL.Path) {
 		case "mcp":
 			return mcp.NewStreamableClientTransport(fmt.Sprintf("https://%s", transportURL.String()), &mcp.StreamableClientTransportOptions{
-				HTTPClient: &http.Client{Transport: &mcpurlRoundTripper{headers: args.Headers}},
+				HTTPClient: &http.Client{Transport: &AddHeadersRoundTripper{Headers: args.Headers}},
 			}), nil
 		case "sse":
 			return mcp.NewSSEClientTransport(fmt.Sprintf("https://%s", transportURL.String()), &mcp.SSEClientTransportOptions{
-				HTTPClient: &http.Client{Transport: &mcpurlRoundTripper{headers: args.Headers}},
+				HTTPClient: &http.Client{Transport: &AddHeadersRoundTripper{Headers: args.Headers}},
 			}), nil
 		default:
 			cmd := cmp.Or(transportURL.Host, transportURL.Path)

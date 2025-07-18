@@ -7,18 +7,18 @@ import (
 	"sync"
 )
 
-type mcpurlRoundTripper struct {
-	headers []string
+type AddHeadersRoundTripper struct {
+	Headers []string
 
 	parsedHeaders    http.Header
 	parseHeadersOnce sync.Once
 }
 
-func (r *mcpurlRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
+func (r *AddHeadersRoundTripper) RoundTrip(req *http.Request) (*http.Response, error) {
 	r.parseHeadersOnce.Do(func() {
-		slog.Debug("Parsing headers", "headers", strings.Join(r.headers, ", "))
+		slog.Debug("Parsing headers", "headers", strings.Join(r.Headers, ", "))
 		r.parsedHeaders = make(http.Header)
-		for _, header := range r.headers {
+		for _, header := range r.Headers {
 			kv := strings.Split(header, ":")
 			if len(kv) != 2 {
 				continue
