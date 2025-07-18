@@ -34,6 +34,9 @@ func (s *ReverseProxy) AddBackends(ctx context.Context, servers map[string]confi
 		var err error
 		switch v.Type {
 		case "stdio":
+			for i, arg := range v.Args {
+				v.Args[i] = os.ExpandEnv(arg)
+			}
 			cmd := exec.Command(v.Command, v.Args...)
 			cmd.Env = v.Env.Encode()
 			cmd.Stderr = os.Stderr
