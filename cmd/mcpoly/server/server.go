@@ -57,9 +57,9 @@ func (s *ReverseProxy) AddBackends(ctx context.Context, servers map[string]confi
 		}
 
 		s.css[k] = cs
-		s.addTools(ctx, cs)
-		s.addPrompts(ctx, cs)
-		s.addResources(ctx, cs)
+		s.addTools(ctx, k, cs)
+		s.addPrompts(ctx, k, cs)
+		s.addResources(ctx, k, cs)
 	}
 	return nil
 }
@@ -80,7 +80,8 @@ func (s *ReverseProxy) Run(ctx context.Context) error {
 	return err
 }
 
-func (s *ReverseProxy) addTools(ctx context.Context, cs *mcp.ClientSession) {
+func (s *ReverseProxy) addTools(ctx context.Context, title string, cs *mcp.ClientSession) {
+	var count int
 	for tool, err := range cs.Tools(ctx, nil) {
 		if err != nil {
 			if strings.Contains(err.Error(), "Method not found") {
@@ -96,10 +97,15 @@ func (s *ReverseProxy) addTools(ctx context.Context, cs *mcp.ClientSession) {
 				Arguments: params.Arguments,
 			})
 		})
+		count++
+	}
+	if count > 0 {
+		fmt.Fprintf(os.Stderr, "%s tools: %d\n", title, count)
 	}
 }
 
-func (s *ReverseProxy) addPrompts(ctx context.Context, cs *mcp.ClientSession) {
+func (s *ReverseProxy) addPrompts(ctx context.Context, title string, cs *mcp.ClientSession) {
+	var count int
 	for prompt, err := range cs.Prompts(ctx, nil) {
 		if err != nil {
 			if strings.Contains(err.Error(), "Method not found") {
@@ -111,10 +117,15 @@ func (s *ReverseProxy) addPrompts(ctx context.Context, cs *mcp.ClientSession) {
 		s.s.AddPrompt(prompt, func(ctx context.Context, _ *mcp.ServerSession, params *mcp.GetPromptParams) (*mcp.GetPromptResult, error) {
 			return cs.GetPrompt(ctx, params)
 		})
+		count++
+	}
+	if count > 0 {
+		fmt.Fprintf(os.Stderr, "%s prompts: %d\n", title, count)
 	}
 }
 
-func (s *ReverseProxy) addResources(ctx context.Context, cs *mcp.ClientSession) {
+func (s *ReverseProxy) addResources(ctx context.Context, title string, cs *mcp.ClientSession) {
+	var count int
 	for resource, err := range cs.Resources(ctx, nil) {
 		if err != nil {
 			if strings.Contains(err.Error(), "Method not found") {
@@ -126,5 +137,9 @@ func (s *ReverseProxy) addResources(ctx context.Context, cs *mcp.ClientSession) 
 		s.s.AddResource(resource, func(ctx context.Context, _ *mcp.ServerSession, params *mcp.ReadResourceParams) (*mcp.ReadResourceResult, error) {
 			return cs.ReadResource(ctx, params)
 		})
+		count++
+	}
+	if count > 0 {
+		fmt.Fprintf(os.Stderr, "%s resources: %d\n", title, count)
 	}
 }

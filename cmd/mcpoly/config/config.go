@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 type KV map[string]string
@@ -30,6 +31,22 @@ type Config struct {
 }
 
 func Parse(file string) (*Config, error) {
+	if file == "" {
+		if v := os.Getenv("MCPOLY_MCP_CONFIG_FILE"); v != "" {
+			file = v
+		} else {
+			home, err := os.UserHomeDir()
+			if err != nil {
+				return nil, fmt.Errorf("failed to get home directory: %w", err)
+			}
+			dir := filepath.Join(home, ".config", "mcpoly")
+			os.MkdirAll(dir, 0755)
+			file = filepath.Join(dir, "mcp.json")
+		}
+		if _, err := os.Stat(file); os.IsNotExist(err) {
+			return &Config{}, nil
+		}
+	}
 	f, err := os.Open(file)
 	if err != nil {
 		return nil, fmt.Errorf("failed to open config file: %w", err)

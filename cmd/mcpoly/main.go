@@ -13,7 +13,7 @@ import (
 var configFile string
 
 func main() {
-	flag.StringVar(&configFile, "f", "mcp.json", "Path to the mcp servers config file")
+	flag.StringVar(&configFile, "f", "", "Path to the mcp servers config file (default is $HOME/.config/mcpoly/mcp.json)")
 	flag.Parse()
 
 	conf, err := config.Parse(configFile)
