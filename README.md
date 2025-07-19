@@ -95,5 +95,16 @@ search_files
 get_file_info
 list_allowed_directories
 ```
+## Play with LLM
+```
+mcpurl -I -L <base_url> -K <api_key> -M <model>
+```
+Read [mcpurl.io/llm](https://mcpurl.io/llm) for details.
+## Play with mcpoly
+```sh
+mcpurl mcpoly -I
+```
+Read [mcpurl.io/mcpoly](https://mcpurl.io/mcpoly) for details.
+
 ## License
-GNU General Public License v3.0
+[GNU General Public License v3.0](https://github.com/cherrydra/mcpurl/blob/main/LICENSE)
